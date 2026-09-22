@@ -19,8 +19,6 @@ public class UserValidationAdapter implements IUserValidationServicePort {
             return userResponseDto != null
                     && userResponseDto.getRol() != null
                     && ROL_PROPIETARIO.equalsIgnoreCase(userResponseDto.getRol().getNombre());
-        } catch (FeignException.NotFound e) {
-            return false;
         } catch (FeignException e) {
             return false;
         }
