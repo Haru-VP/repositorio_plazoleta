@@ -1,8 +1,11 @@
 package com.pragma.powerup.infrastructure.exceptionhandler;
 
+import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
 import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
+import com.pragma.powerup.domain.exception.PrecioInvalidoException;
+import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
 import com.pragma.powerup.domain.exception.TelefonoInvalidoException;
 import com.pragma.powerup.domain.exception.UsuarioNoEsPropietarioException;
 import com.pragma.powerup.infrastructure.exception.NoDataFoundException;
@@ -60,6 +63,27 @@ public class ControllerAdvisor {
             NitYaExisteException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.NIT_YA_EXISTE.getMessage()));
+    }
+
+    @ExceptionHandler(PrecioInvalidoException.class)
+    public ResponseEntity<Map<String, String>> handlePrecioInvalidoException(
+            PrecioInvalidoException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PRECIO_INVALIDO.getMessage()));
+    }
+
+    @ExceptionHandler(RestauranteNoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handleRestauranteNoEncontradoException(
+            RestauranteNoEncontradoException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.RESTAURANTE_NO_ENCONTRADO.getMessage()));
+    }
+
+    @ExceptionHandler(CategoriaNoEncontradaException.class)
+    public ResponseEntity<Map<String, String>> handleCategoriaNoEncontradaException(
+            CategoriaNoEncontradaException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.CATEGORIA_NO_ENCONTRADA.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
