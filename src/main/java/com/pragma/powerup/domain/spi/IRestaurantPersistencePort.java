@@ -7,4 +7,8 @@ public interface IRestaurantPersistencePort {
     void guardarRestaurante(RestaurantModel restaurantModel);
 
     boolean existePorNit(String nit);
+
+    boolean existePorId(Long id);
+
+    RestaurantModel obtenerPorId(Long id);
 }
