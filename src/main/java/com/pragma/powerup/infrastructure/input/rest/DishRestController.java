@@ -32,6 +32,7 @@ public class DishRestController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Plato creado exitosamente", content = @Content),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o precio menor/igual a cero", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: solo el propietario del restaurante puede crear platos", content = @Content),
             @ApiResponse(responseCode = "404", description = "Restaurante o categoría no encontrados", content = @Content)
     })
     @PostMapping
@@ -44,6 +45,7 @@ public class DishRestController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Plato modificado exitosamente", content = @Content),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o precio menor/igual a cero", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: solo el propietario del restaurante puede modificar platos", content = @Content),
             @ApiResponse(responseCode = "404", description = "Plato no encontrado", content = @Content)
     })
     @PutMapping("/{id}")

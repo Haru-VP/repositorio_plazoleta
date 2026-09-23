@@ -29,6 +29,7 @@ public class RestaurantRestController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Restaurante creado exitosamente", content = @Content),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o reglas de negocio no cumplidas", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol ADMINISTRADOR", content = @Content),
             @ApiResponse(responseCode = "409", description = "El NIT del restaurante ya se encuentra registrado", content = @Content)
     })
     @PostMapping

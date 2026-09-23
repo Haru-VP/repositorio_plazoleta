@@ -4,9 +4,11 @@ import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
+import com.pragma.powerup.domain.exception.UsuarioNoAutorizadoException;
 import com.pragma.powerup.domain.model.CategoryModel;
 import com.pragma.powerup.domain.model.DishModel;
 import com.pragma.powerup.domain.model.RestaurantModel;
+import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.ICategoryPersistencePort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
@@ -21,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DishUseCaseTest {
@@ -35,6 +39,9 @@ class DishUseCaseTest {
     @Mock
     private IRestaurantPersistencePort restaurantPersistencePort;
 
+    @Mock
+    private IAuthenticatedUserPort authenticatedUserPort;
+
     @InjectMocks
     private DishUseCase dishUseCase;
 
@@ -46,6 +53,7 @@ class DishUseCaseTest {
     void setUp() {
         restauranteValido = new RestaurantModel();
         restauranteValido.setId(1L);
+        restauranteValido.setIdPropietario(1L);
 
         categoriaValida = new CategoryModel();
         categoriaValida.setId(1L);
@@ -65,7 +73,8 @@ class DishUseCaseTest {
     @Test
     void guardarPlato_datosValidos_guardaPlatoConActivoEnTrue() {
         // Arrange
-        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(1L);
         when(categoryPersistencePort.existePorId(1L)).thenReturn(true);
 
         // Act
@@ -73,9 +82,21 @@ class DishUseCaseTest {
 
         // Assert
         assertTrue(platoValido.getActivo());
-        verify(restaurantPersistencePort).existePorId(1L);
+        verify(restaurantPersistencePort).obtenerPorId(1L);
+        verify(authenticatedUserPort).obtenerIdUsuarioAutenticado();
         verify(categoryPersistencePort).existePorId(1L);
         verify(dishPersistencePort).guardarPlato(platoValido);
+    }
+
+    @Test
+    void guardarPlato_usuarioNoEsPropietario_lanzaUsuarioNoAutorizadoException() {
+        // Arrange
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(999L);
+
+        // Act & Assert
+        assertThrows(UsuarioNoAutorizadoException.class, () -> dishUseCase.guardarPlato(platoValido));
+        verify(dishPersistencePort, never()).guardarPlato(any());
     }
 
     @Test
@@ -111,7 +132,7 @@ class DishUseCaseTest {
     @Test
     void guardarPlato_restauranteNoExiste_lanzaExcepcion() {
         // Arrange
-        when(restaurantPersistencePort.existePorId(1L)).thenReturn(false);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(null);
 
         // Act & Assert
         assertThrows(RestauranteNoEncontradoException.class, () -> dishUseCase.guardarPlato(platoValido));
@@ -131,7 +152,8 @@ class DishUseCaseTest {
     @Test
     void guardarPlato_categoriaNoExiste_lanzaExcepcion() {
         // Arrange
-        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(1L);
         when(categoryPersistencePort.existePorId(1L)).thenReturn(false);
 
         // Act & Assert
@@ -142,7 +164,8 @@ class DishUseCaseTest {
     @Test
     void guardarPlato_categoriaNula_lanzaExcepcion() {
         // Arrange
-        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(1L);
         platoValido.setCategoria(null);
 
         // Act & Assert
@@ -157,6 +180,8 @@ class DishUseCaseTest {
         Integer nuevoPrecio = 42000;
         String nuevaDescripcion = "Bandeja paisa con porción extra de aguacate";
         when(dishPersistencePort.obtenerPlatoPorId(idPlato)).thenReturn(platoValido);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(1L);
 
         // Act
         dishUseCase.actualizarPlato(idPlato, nuevoPrecio, nuevaDescripcion);
@@ -166,7 +191,24 @@ class DishUseCaseTest {
         assertEquals(nuevaDescripcion, platoValido.getDescripcion());
         assertEquals("Bandeja Paisa", platoValido.getNombre());
         verify(dishPersistencePort).obtenerPlatoPorId(idPlato);
+        verify(restaurantPersistencePort).obtenerPorId(1L);
+        verify(authenticatedUserPort).obtenerIdUsuarioAutenticado();
         verify(dishPersistencePort).actualizarPlato(platoValido);
+    }
+
+    @Test
+    void actualizarPlato_usuarioNoEsPropietario_lanzaUsuarioNoAutorizadoException() {
+        // Arrange
+        Long idPlato = 1L;
+        when(dishPersistencePort.obtenerPlatoPorId(idPlato)).thenReturn(platoValido);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(999L);
+
+        // Act & Assert
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                dishUseCase.actualizarPlato(idPlato, 42000, "Descripción de prueba")
+        );
+        verify(dishPersistencePort, never()).actualizarPlato(any());
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.pragma.powerup.infrastructure.configuration;
 import com.pragma.powerup.domain.api.IDishServicePort;
 import com.pragma.powerup.domain.api.IObjectServicePort;
 import com.pragma.powerup.domain.api.IRestaurantServicePort;
+import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.ICategoryPersistencePort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
 import com.pragma.powerup.domain.spi.IObjectPersistencePort;
@@ -44,6 +45,7 @@ public class BeanConfiguration {
     private final ICategoryEntityMapper categoryEntityMapper;
     private final IDishRepository dishRepository;
     private final IDishEntityMapper dishEntityMapper;
+    private final IAuthenticatedUserPort authenticatedUserPort;
 
     @Bean
     public IObjectPersistencePort objectPersistencePort() {
@@ -82,6 +84,6 @@ public class BeanConfiguration {
 
     @Bean
     public IDishServicePort dishServicePort() {
-        return new DishUseCase(dishPersistencePort(), categoryPersistencePort(), restaurantPersistencePort());
+        return new DishUseCase(dishPersistencePort(), categoryPersistencePort(), restaurantPersistencePort(), authenticatedUserPort);
     }
 }

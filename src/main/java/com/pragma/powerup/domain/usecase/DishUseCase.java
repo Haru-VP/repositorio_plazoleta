@@ -5,9 +5,11 @@ import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
+import com.pragma.powerup.domain.exception.UsuarioNoAutorizadoException;
 import com.pragma.powerup.domain.model.CategoryModel;
 import com.pragma.powerup.domain.model.DishModel;
 import com.pragma.powerup.domain.model.RestaurantModel;
+import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.ICategoryPersistencePort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
@@ -19,19 +21,23 @@ public class DishUseCase implements IDishServicePort {
     private final IDishPersistencePort dishPersistencePort;
     private final ICategoryPersistencePort categoryPersistencePort;
     private final IRestaurantPersistencePort restaurantPersistencePort;
+    private final IAuthenticatedUserPort authenticatedUserPort;
 
     public DishUseCase(IDishPersistencePort dishPersistencePort,
                        ICategoryPersistencePort categoryPersistencePort,
-                       IRestaurantPersistencePort restaurantPersistencePort) {
+                       IRestaurantPersistencePort restaurantPersistencePort,
+                       IAuthenticatedUserPort authenticatedUserPort) {
         this.dishPersistencePort = dishPersistencePort;
         this.categoryPersistencePort = categoryPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
+        this.authenticatedUserPort = authenticatedUserPort;
     }
 
     @Override
     public void guardarPlato(DishModel dishModel) {
         validarPrecio(dishModel.getPrecio());
-        validarRestaurante(dishModel.getRestaurante());
+        RestaurantModel restaurante = obtenerRestauranteValidado(dishModel.getRestaurante());
+        validarPropietarioDelRestaurante(restaurante);
         validarCategoria(dishModel.getCategoria());
 
         dishModel.setActivo(Boolean.TRUE);
@@ -46,6 +52,9 @@ public class DishUseCase implements IDishServicePort {
             throw new PlatoNoEncontradoException();
         }
 
+        RestaurantModel restaurante = obtenerRestauranteValidado(platoExistente.getRestaurante());
+        validarPropietarioDelRestaurante(restaurante);
+
         platoExistente.setPrecio(precio);
         platoExistente.setDescripcion(descripcion);
         dishPersistencePort.actualizarPlato(platoExistente);
@@ -57,9 +66,21 @@ public class DishUseCase implements IDishServicePort {
         }
     }
 
-    private void validarRestaurante(RestaurantModel restaurante) {
-        if (restaurante == null || restaurante.getId() == null || !restaurantPersistencePort.existePorId(restaurante.getId())) {
+    private RestaurantModel obtenerRestauranteValidado(RestaurantModel restaurante) {
+        if (restaurante == null || restaurante.getId() == null) {
             throw new RestauranteNoEncontradoException();
+        }
+        RestaurantModel restauranteEncontrado = restaurantPersistencePort.obtenerPorId(restaurante.getId());
+        if (restauranteEncontrado == null) {
+            throw new RestauranteNoEncontradoException();
+        }
+        return restauranteEncontrado;
+    }
+
+    private void validarPropietarioDelRestaurante(RestaurantModel restaurante) {
+        Long idUsuarioAutenticado = authenticatedUserPort.obtenerIdUsuarioAutenticado();
+        if (idUsuarioAutenticado == null || !idUsuarioAutenticado.equals(restaurante.getIdPropietario())) {
+            throw new UsuarioNoAutorizadoException();
         }
     }
 

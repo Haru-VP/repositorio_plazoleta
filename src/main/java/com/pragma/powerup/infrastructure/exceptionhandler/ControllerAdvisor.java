@@ -8,6 +8,7 @@ import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
 import com.pragma.powerup.domain.exception.TelefonoInvalidoException;
+import com.pragma.powerup.domain.exception.UsuarioNoAutorizadoException;
 import com.pragma.powerup.domain.exception.UsuarioNoEsPropietarioException;
 import com.pragma.powerup.infrastructure.exception.NoDataFoundException;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,13 @@ public class ControllerAdvisor {
             UsuarioNoEsPropietarioException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.USUARIO_NO_ES_PROPIETARIO.getMessage()));
+    }
+
+    @ExceptionHandler(UsuarioNoAutorizadoException.class)
+    public ResponseEntity<Map<String, String>> handleUsuarioNoAutorizadoException(
+            UsuarioNoAutorizadoException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.USUARIO_NO_AUTORIZADO.getMessage()));
     }
 
     @ExceptionHandler(NitYaExisteException.class)

@@ -10,7 +10,8 @@ public enum ExceptionResponse {
     PRECIO_INVALIDO("El precio del plato debe ser un número entero positivo mayor a cero"),
     RESTAURANTE_NO_ENCONTRADO("El restaurante especificado no existe en el sistema"),
     CATEGORIA_NO_ENCONTRADA("La categoría especificada no existe en el sistema"),
-    PLATO_NO_ENCONTRADO("El plato especificado no existe en el sistema");
+    PLATO_NO_ENCONTRADO("El plato especificado no existe en el sistema"),
+    USUARIO_NO_AUTORIZADO("El usuario autenticado no tiene permisos para realizar esta acción sobre este restaurante");
 
     private final String message;
 
