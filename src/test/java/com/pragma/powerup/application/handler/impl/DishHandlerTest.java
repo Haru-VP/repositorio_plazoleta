@@ -1,6 +1,7 @@
 package com.pragma.powerup.application.handler.impl;
 
 import com.pragma.powerup.application.dto.request.DishRequestDto;
+import com.pragma.powerup.application.dto.request.UpdateDishRequestDto;
 import com.pragma.powerup.application.mapper.IDishRequestMapper;
 import com.pragma.powerup.domain.api.IDishServicePort;
 import com.pragma.powerup.domain.model.CategoryModel;
@@ -68,5 +69,18 @@ class DishHandlerTest {
         // Assert
         verify(dishRequestMapper, times(1)).toModel(dishRequestDto);
         verify(dishServicePort, times(1)).guardarPlato(dishModel);
+    }
+
+    @Test
+    void actualizarPlato_debeLlamarAlPuertoDelDominioConParametrosCorrectos() {
+        // Arrange
+        Long idPlato = 1L;
+        UpdateDishRequestDto updateDto = new UpdateDishRequestDto(40000, "Nueva descripción");
+
+        // Act
+        dishHandler.actualizarPlato(idPlato, updateDto);
+
+        // Assert
+        verify(dishServicePort, times(1)).actualizarPlato(idPlato, 40000, "Nueva descripción");
     }
 }

@@ -1,6 +1,7 @@
 package com.pragma.powerup.domain.usecase;
 
 import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
+import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
 import com.pragma.powerup.domain.model.CategoryModel;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -146,5 +148,56 @@ class DishUseCaseTest {
         // Act & Assert
         assertThrows(CategoriaNoEncontradaException.class, () -> dishUseCase.guardarPlato(platoValido));
         verify(dishPersistencePort, never()).guardarPlato(any());
+    }
+
+    @Test
+    void actualizarPlato_datosValidos_actualizaPrecioYDescripcionExitosamente() {
+        // Arrange
+        Long idPlato = 1L;
+        Integer nuevoPrecio = 42000;
+        String nuevaDescripcion = "Bandeja paisa con porción extra de aguacate";
+        when(dishPersistencePort.obtenerPlatoPorId(idPlato)).thenReturn(platoValido);
+
+        // Act
+        dishUseCase.actualizarPlato(idPlato, nuevoPrecio, nuevaDescripcion);
+
+        // Assert
+        assertEquals(nuevoPrecio, platoValido.getPrecio());
+        assertEquals(nuevaDescripcion, platoValido.getDescripcion());
+        assertEquals("Bandeja Paisa", platoValido.getNombre());
+        verify(dishPersistencePort).obtenerPlatoPorId(idPlato);
+        verify(dishPersistencePort).actualizarPlato(platoValido);
+    }
+
+    @Test
+    void actualizarPlato_platoNoExiste_lanzaPlatoNoEncontradoException() {
+        // Arrange
+        Long idPlatoInexistente = 999L;
+        when(dishPersistencePort.obtenerPlatoPorId(idPlatoInexistente)).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(PlatoNoEncontradoException.class, () ->
+                dishUseCase.actualizarPlato(idPlatoInexistente, 42000, "Descripción de prueba")
+        );
+        verify(dishPersistencePort, never()).actualizarPlato(any());
+    }
+
+    @Test
+    void actualizarPlato_precioInvalido_lanzaPrecioInvalidoException() {
+        // Arrange
+        Long idPlato = 1L;
+
+        // Act & Assert
+        assertThrows(PrecioInvalidoException.class, () ->
+                dishUseCase.actualizarPlato(idPlato, 0, "Descripción de prueba")
+        );
+        assertThrows(PrecioInvalidoException.class, () ->
+                dishUseCase.actualizarPlato(idPlato, -500, "Descripción de prueba")
+        );
+        assertThrows(PrecioInvalidoException.class, () ->
+                dishUseCase.actualizarPlato(idPlato, null, "Descripción de prueba")
+        );
+        verify(dishPersistencePort, never()).obtenerPlatoPorId(any());
+        verify(dishPersistencePort, never()).actualizarPlato(any());
     }
 }

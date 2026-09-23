@@ -9,7 +9,8 @@ public enum ExceptionResponse {
     NIT_YA_EXISTE("Ya existe un restaurante registrado con ese NIT"),
     PRECIO_INVALIDO("El precio del plato debe ser un número entero positivo mayor a cero"),
     RESTAURANTE_NO_ENCONTRADO("El restaurante especificado no existe en el sistema"),
-    CATEGORIA_NO_ENCONTRADA("La categoría especificada no existe en el sistema");
+    CATEGORIA_NO_ENCONTRADA("La categoría especificada no existe en el sistema"),
+    PLATO_NO_ENCONTRADO("El plato especificado no existe en el sistema");
 
     private final String message;
 

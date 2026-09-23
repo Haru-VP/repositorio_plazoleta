@@ -4,6 +4,7 @@ import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
 import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
+import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
 import com.pragma.powerup.domain.exception.TelefonoInvalidoException;
@@ -84,6 +85,13 @@ public class ControllerAdvisor {
             CategoriaNoEncontradaException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.CATEGORIA_NO_ENCONTRADA.getMessage()));
+    }
+
+    @ExceptionHandler(PlatoNoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handlePlatoNoEncontradoException(
+            PlatoNoEncontradoException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PLATO_NO_ENCONTRADO.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

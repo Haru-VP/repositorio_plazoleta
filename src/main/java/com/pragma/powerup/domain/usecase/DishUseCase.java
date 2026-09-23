@@ -2,6 +2,7 @@ package com.pragma.powerup.domain.usecase;
 
 import com.pragma.powerup.domain.api.IDishServicePort;
 import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
+import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
 import com.pragma.powerup.domain.model.CategoryModel;
@@ -35,6 +36,19 @@ public class DishUseCase implements IDishServicePort {
 
         dishModel.setActivo(Boolean.TRUE);
         dishPersistencePort.guardarPlato(dishModel);
+    }
+
+    @Override
+    public void actualizarPlato(Long id, Integer precio, String descripcion) {
+        validarPrecio(precio);
+        DishModel platoExistente = dishPersistencePort.obtenerPlatoPorId(id);
+        if (platoExistente == null) {
+            throw new PlatoNoEncontradoException();
+        }
+
+        platoExistente.setPrecio(precio);
+        platoExistente.setDescripcion(descripcion);
+        dishPersistencePort.actualizarPlato(platoExistente);
     }
 
     private void validarPrecio(Integer precio) {
