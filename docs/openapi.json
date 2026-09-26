@@ -1,278 +1,339 @@
-﻿{
-    "openapi":  "3.0.1",
-    "info":  {
-                 "title":  "Microservicio de Plazoleta - PowerUp Plazoleta",
-                 "description":  "API REST para la gestiÃ³n de restaurantes, menÃºs, platos y ciclo de vida de los pedidos en la plataforma de Plazoleta de Comidas bajo Arquitectura Hexagonal.",
-                 "termsOfService":  "http://swagger.io/terms/",
-                 "contact":  {
-                                 "name":  "Valentina Pinto",
-                                 "email":  "valentina.pinto@pragma.com.co"
-                             },
-                 "license":  {
-                                 "name":  "Apache 2.0",
-                                 "url":  "http://springdoc.org"
-                             },
-                 "version":  "1.0.0"
-             },
-    "servers":  [
-                    {
-                        "url":  "http://localhost:8082",
-                        "description":  "Generated server url"
-                    }
-                ],
-    "security":  [
-                     {
-                         "jwtAuth":  [
-
-                                     ]
-                     }
-                 ],
-    "tags":  [
-                 {
-                     "name":  "Platos",
-                     "description":  "Endpoints para la creaciÃ³n, configuraciÃ³n y gestiÃ³n de platos"
-                 },
-                 {
-                     "name":  "Restaurantes",
-                     "description":  "Endpoints para la creaciÃ³n, configuraciÃ³n y gestiÃ³n de restaurantes"
-                 }
-             ],
-    "paths":  {
-                  "/api/v1/dish/{id}":  {
-                                            "put":  {
-                                                        "tags":  [
-                                                                     "Platos"
-                                                                 ],
-                                                        "summary":  "Modificar el precio y la descripciÃ³n de un plato existente",
-                                                        "operationId":  "actualizarPlato",
-                                                        "parameters":  [
-                                                                           {
-                                                                               "name":  "id",
-                                                                               "in":  "path",
-                                                                               "required":  true,
-                                                                               "schema":  {
-                                                                                              "type":  "integer",
-                                                                                              "format":  "int64"
-                                                                                          }
-                                                                           }
-                                                                       ],
-                                                        "requestBody":  {
-                                                                            "content":  {
-                                                                                            "application/json":  {
-                                                                                                                     "schema":  {
-                                                                                                                                    "$ref":  "#/components/schemas/UpdateDishRequestDto"
-                                                                                                                                }
-                                                                                                                 }
-                                                                                        },
-                                                                            "required":  true
-                                                                        },
-                                                        "responses":  {
-                                                                          "404":  {
-                                                                                      "description":  "Plato no encontrado"
-                                                                                  },
-                                                                          "200":  {
-                                                                                      "description":  "Plato modificado exitosamente"
-                                                                                  },
-                                                                          "400":  {
-                                                                                      "description":  "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
-                                                                                  },
-                                                                          "403":  {
-                                                                                      "description":  "Acceso denegado: solo el propietario del restaurante puede modificar platos"
-                                                                                  }
-                                                                      }
-                                                    }
-                                        },
-                  "/api/v1/restaurant":  {
-                                             "post":  {
-                                                          "tags":  [
-                                                                       "Restaurantes"
-                                                                   ],
-                                                          "summary":  "Crear un nuevo restaurante",
-                                                          "operationId":  "guardarRestaurante",
-                                                          "requestBody":  {
-                                                                              "content":  {
-                                                                                              "application/json":  {
-                                                                                                                       "schema":  {
-                                                                                                                                      "$ref":  "#/components/schemas/RestaurantRequestDto"
-                                                                                                                                  }
-                                                                                                                   }
-                                                                                          },
-                                                                              "required":  true
-                                                                          },
-                                                          "responses":  {
-                                                                            "403":  {
-                                                                                        "description":  "Acceso denegado: se requiere rol ADMINISTRADOR"
-                                                                                    },
-                                                                            "409":  {
-                                                                                        "description":  "El NIT del restaurante ya se encuentra registrado"
-                                                                                    },
-                                                                            "201":  {
-                                                                                        "description":  "Restaurante creado exitosamente"
-                                                                                    },
-                                                                            "400":  {
-                                                                                        "description":  "Datos de entrada invÃ¡lidos o reglas de negocio no cumplidas"
-                                                                                    }
-                                                                        }
-                                                      }
-                                         },
-                  "/api/v1/dish":  {
-                                       "post":  {
-                                                    "tags":  [
-                                                                 "Platos"
-                                                             ],
-                                                    "summary":  "Crear un nuevo plato asociado a un restaurante",
-                                                    "operationId":  "guardarPlato",
-                                                    "requestBody":  {
-                                                                        "content":  {
-                                                                                        "application/json":  {
-                                                                                                                 "schema":  {
-                                                                                                                                "$ref":  "#/components/schemas/DishRequestDto"
-                                                                                                                            }
-                                                                                                             }
-                                                                                    },
-                                                                        "required":  true
-                                                                    },
-                                                    "responses":  {
-                                                                      "201":  {
-                                                                                  "description":  "Plato creado exitosamente"
-                                                                              },
-                                                                      "404":  {
-                                                                                  "description":  "Restaurante o categorÃ­a no encontrados"
-                                                                              },
-                                                                      "403":  {
-                                                                                  "description":  "Acceso denegado: solo el propietario del restaurante puede crear platos"
-                                                                              },
-                                                                      "400":  {
-                                                                                  "description":  "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
-                                                                              }
-                                                                  }
-                                                }
-                                   }
-              },
-    "components":  {
-                       "schemas":  {
-                                       "UpdateDishRequestDto":  {
-                                                                    "required":  [
-                                                                                     "descripcion",
-                                                                                     "precio"
-                                                                                 ],
-                                                                    "type":  "object",
-                                                                    "properties":  {
-                                                                                       "precio":  {
-                                                                                                      "minimum":  1,
-                                                                                                      "type":  "integer",
-                                                                                                      "description":  "Nuevo precio del plato (nÃºmero entero positivo mayor a 0)",
-                                                                                                      "format":  "int32",
-                                                                                                      "example":  38000
-                                                                                                  },
-                                                                                       "descripcion":  {
-                                                                                                           "type":  "string",
-                                                                                                           "description":  "Nueva descripciÃ³n detallada del plato",
-                                                                                                           "example":  "Deliciosa bandeja paisa tradicional con ingredientes frescos y porciÃ³n extra de aguacate"
-                                                                                                       }
-                                                                                   },
-                                                                    "description":  "Datos permitidos para la actualizaciÃ³n de un plato existente (Ãºnicamente precio y descripciÃ³n)"
-                                                                },
-                                       "RestaurantRequestDto":  {
-                                                                    "required":  [
-                                                                                     "direccion",
-                                                                                     "idPropietario",
-                                                                                     "nit",
-                                                                                     "nombre",
-                                                                                     "telefono",
-                                                                                     "urlLogo"
-                                                                                 ],
-                                                                    "type":  "object",
-                                                                    "properties":  {
-                                                                                       "nombre":  {
-                                                                                                      "type":  "string",
-                                                                                                      "description":  "Nombre comercial del restaurante (no puede estar compuesto Ãºnicamente por nÃºmeros)",
-                                                                                                      "example":  "Restaurante El Buen Sabor"
-                                                                                                  },
-                                                                                       "nit":  {
-                                                                                                   "type":  "string",
-                                                                                                   "description":  "NÃºmero de IdentificaciÃ³n Tributaria (NIT Ãºnicamente numÃ©rico)",
-                                                                                                   "example":  "900123456"
-                                                                                               },
-                                                                                       "direccion":  {
-                                                                                                         "type":  "string",
-                                                                                                         "description":  "DirecciÃ³n fÃ­sica del restaurante",
-                                                                                                         "example":  "Calle 100 # 15-20"
-                                                                                                     },
-                                                                                       "telefono":  {
-                                                                                                        "type":  "string",
-                                                                                                        "description":  "NÃºmero telefÃ³nico de contacto (mÃ¡ximo 13 caracteres, admite prefijo +)",
-                                                                                                        "example":  "+573001234567"
-                                                                                                    },
-                                                                                       "urlLogo":  {
-                                                                                                       "type":  "string",
-                                                                                                       "description":  "URL accesible que apunta a la imagen del logo del restaurante",
-                                                                                                       "example":  "https://misimagenes.com/logo-restaurante.png"
-                                                                                                   },
-                                                                                       "idPropietario":  {
-                                                                                                             "type":  "integer",
-                                                                                                             "description":  "ID del usuario que actÃºa como propietario (debe existir y tener rol PROPIETARIO)",
-                                                                                                             "format":  "int64",
-                                                                                                             "example":  1
-                                                                                                         }
-                                                                                   },
-                                                                    "description":  "Datos requeridos para la creaciÃ³n de un nuevo restaurante"
-                                                                },
-                                       "DishRequestDto":  {
-                                                              "required":  [
-                                                                               "descripcion",
-                                                                               "idCategoria",
-                                                                               "idRestaurante",
-                                                                               "nombre",
-                                                                               "precio",
-                                                                               "urlImagen"
-                                                                           ],
-                                                              "type":  "object",
-                                                              "properties":  {
-                                                                                 "nombre":  {
-                                                                                                "type":  "string",
-                                                                                                "description":  "Nombre comercial del plato",
-                                                                                                "example":  "Bandeja Paisa"
-                                                                                            },
-                                                                                 "idCategoria":  {
-                                                                                                     "type":  "integer",
-                                                                                                     "description":  "Identificador de la categorÃ­a a la que pertenece el plato",
-                                                                                                     "format":  "int64",
-                                                                                                     "example":  2
-                                                                                                 },
-                                                                                 "descripcion":  {
-                                                                                                     "type":  "string",
-                                                                                                     "description":  "DescripciÃ³n detallada de ingredientes y preparaciÃ³n del plato",
-                                                                                                     "example":  "Deliciosa bandeja con frijoles, arroz, carne molida, chicharrÃ³n, huevo y aguacate"
-                                                                                                 },
-                                                                                 "precio":  {
-                                                                                                "minimum":  1,
-                                                                                                "type":  "integer",
-                                                                                                "description":  "Precio del plato (nÃºmero entero positivo mayor a 0)",
-                                                                                                "format":  "int32",
-                                                                                                "example":  35000
-                                                                                            },
-                                                                                 "idRestaurante":  {
-                                                                                                       "type":  "integer",
-                                                                                                       "description":  "Identificador del restaurante al cual se asocia el plato",
-                                                                                                       "format":  "int64",
-                                                                                                       "example":  1
-                                                                                                   },
-                                                                                 "urlImagen":  {
-                                                                                                   "type":  "string",
-                                                                                                   "description":  "URL accesible que apunta a la fotografÃ­a del plato",
-                                                                                                   "example":  "https://misimagenes.com/platos/bandeja-paisa.png"
-                                                                                               }
-                                                                             },
-                                                              "description":  "Datos requeridos para la creaciÃ³n de un nuevo plato en el menÃº"
-                                                          }
-                                   },
-                       "securitySchemes":  {
-                                               "jwtAuth":  {
-                                                               "type":  "http",
-                                                               "scheme":  "bearer",
-                                                               "bearerFormat":  "JWT"
-                                                           }
-                                           }
-                   }
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Microservicio de Plazoleta - PowerUp Plazoleta",
+    "description": "API REST para la gestiÃ³n de restaurantes, menÃºs, platos y ciclo de vida de los pedidos en la plataforma de Plazoleta de Comidas bajo Arquitectura Hexagonal.",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "name": "Valentina Pinto",
+      "email": "valentina.pinto@pragma.com.co"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://springdoc.org"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8082",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "jwtAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Platos",
+      "description": "Endpoints para la creaciÃ³n, configuraciÃ³n y gestiÃ³n de platos"
+    },
+    {
+      "name": "Restaurantes",
+      "description": "Endpoints para la creaciÃ³n, configuraciÃ³n y gestiÃ³n de restaurantes"
+    }
+  ],
+  "paths": {
+    "/api/v1/dish/{id}": {
+      "put": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Modificar el precio y la descripciÃ³n de un plato existente",
+        "operationId": "actualizarPlato",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDishRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Plato no encontrado"
+          },
+          "200": {
+            "description": "Plato modificado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
+          },
+          "403": {
+            "description": "Acceso denegado: solo el propietario del restaurante puede modificar platos"
+          }
+        }
+      }
+    },
+    "/api/v1/restaurant": {
+      "post": {
+        "tags": [
+          "Restaurantes"
+        ],
+        "summary": "Crear un nuevo restaurante",
+        "operationId": "guardarRestaurante",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestaurantRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Acceso denegado: se requiere rol ADMINISTRADOR"
+          },
+          "409": {
+            "description": "El NIT del restaurante ya se encuentra registrado"
+          },
+          "201": {
+            "description": "Restaurante creado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada invÃ¡lidos o reglas de negocio no cumplidas"
+          }
+        }
+      }
+    },
+    "/api/v1/dish": {
+      "post": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Crear un nuevo plato asociado a un restaurante",
+        "operationId": "guardarPlato",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DishRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Plato creado exitosamente"
+          },
+          "404": {
+            "description": "Restaurante o categorÃ­a no encontrados"
+          },
+          "403": {
+            "description": "Acceso denegado: solo el propietario del restaurante puede crear platos"
+          },
+          "400": {
+            "description": "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
+          }
+        }
+      }
+    },
+    "/api/v1/dish/{id}/estado": {
+      "patch": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Habilitar o deshabilitar un plato en el menú del restaurante",
+        "operationId": "cambiarEstadoPlato",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/DishStatusRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del plato modificado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: solo el propietario del restaurante puede modificar el estado del plato"
+          },
+          "404": {
+            "description": "Plato no encontrado"
+          }
+        },
+        "security": [
+          {
+            "BearerAuthentication": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateDishRequestDto": {
+        "required": [
+          "descripcion",
+          "precio"
+        ],
+        "type": "object",
+        "properties": {
+          "precio": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "Nuevo precio del plato (nÃºmero entero positivo mayor a 0)",
+            "format": "int32",
+            "example": 38000
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Nueva descripciÃ³n detallada del plato",
+            "example": "Deliciosa bandeja paisa tradicional con ingredientes frescos y porciÃ³n extra de aguacate"
+          }
+        },
+        "description": "Datos permitidos para la actualizaciÃ³n de un plato existente (Ãºnicamente precio y descripciÃ³n)"
+      },
+      "RestaurantRequestDto": {
+        "required": [
+          "direccion",
+          "idPropietario",
+          "nit",
+          "nombre",
+          "telefono",
+          "urlLogo"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del restaurante (no puede estar compuesto Ãºnicamente por nÃºmeros)",
+            "example": "Restaurante El Buen Sabor"
+          },
+          "nit": {
+            "type": "string",
+            "description": "NÃºmero de IdentificaciÃ³n Tributaria (NIT Ãºnicamente numÃ©rico)",
+            "example": "900123456"
+          },
+          "direccion": {
+            "type": "string",
+            "description": "DirecciÃ³n fÃ­sica del restaurante",
+            "example": "Calle 100 # 15-20"
+          },
+          "telefono": {
+            "type": "string",
+            "description": "NÃºmero telefÃ³nico de contacto (mÃ¡ximo 13 caracteres, admite prefijo +)",
+            "example": "+573001234567"
+          },
+          "urlLogo": {
+            "type": "string",
+            "description": "URL accesible que apunta a la imagen del logo del restaurante",
+            "example": "https://misimagenes.com/logo-restaurante.png"
+          },
+          "idPropietario": {
+            "type": "integer",
+            "description": "ID del usuario que actÃºa como propietario (debe existir y tener rol PROPIETARIO)",
+            "format": "int64",
+            "example": 1
+          }
+        },
+        "description": "Datos requeridos para la creaciÃ³n de un nuevo restaurante"
+      },
+      "DishRequestDto": {
+        "required": [
+          "descripcion",
+          "idCategoria",
+          "idRestaurante",
+          "nombre",
+          "precio",
+          "urlImagen"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del plato",
+            "example": "Bandeja Paisa"
+          },
+          "idCategoria": {
+            "type": "integer",
+            "description": "Identificador de la categorÃ­a a la que pertenece el plato",
+            "format": "int64",
+            "example": 2
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "DescripciÃ³n detallada de ingredientes y preparaciÃ³n del plato",
+            "example": "Deliciosa bandeja con frijoles, arroz, carne molida, chicharrÃ³n, huevo y aguacate"
+          },
+          "precio": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "Precio del plato (nÃºmero entero positivo mayor a 0)",
+            "format": "int32",
+            "example": 35000
+          },
+          "idRestaurante": {
+            "type": "integer",
+            "description": "Identificador del restaurante al cual se asocia el plato",
+            "format": "int64",
+            "example": 1
+          },
+          "urlImagen": {
+            "type": "string",
+            "description": "URL accesible que apunta a la fotografÃ­a del plato",
+            "example": "https://misimagenes.com/platos/bandeja-paisa.png"
+          }
+        },
+        "description": "Datos requeridos para la creaciÃ³n de un nuevo plato en el menÃº"
+      },
+      "DishStatusRequestDto": {
+        "type": "object",
+        "properties": {
+          "activo": {
+            "type": "boolean",
+            "description": "Estado de disponibilidad del plato (true para habilitar, false para deshabilitar)",
+            "example": false
+          }
+        },
+        "required": [
+          "activo"
+        ],
+        "description": "Datos para habilitar o deshabilitar un plato en el menú"
+      }
+    },
+    "securitySchemes": {
+      "jwtAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
 }

@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.DishRequestDto;
+import com.pragma.powerup.application.dto.request.DishStatusRequestDto;
 import com.pragma.powerup.application.dto.request.UpdateDishRequestDto;
 import com.pragma.powerup.application.handler.IDishHandler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -53,6 +55,21 @@ public class DishRestController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateDishRequestDto updateDishRequestDto) {
         dishHandler.actualizarPlato(id, updateDishRequestDto);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Operation(summary = "Habilitar o deshabilitar un plato en el menú del restaurante")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado del plato modificado exitosamente", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: solo el propietario del restaurante puede modificar el estado del plato", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Plato no encontrado", content = @Content)
+    })
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Void> cambiarEstadoPlato(
+            @PathVariable Long id,
+            @Valid @RequestBody DishStatusRequestDto dishStatusRequestDto) {
+        dishHandler.cambiarEstadoPlato(id, dishStatusRequestDto);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

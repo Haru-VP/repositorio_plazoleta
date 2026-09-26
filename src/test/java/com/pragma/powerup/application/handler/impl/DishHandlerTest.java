@@ -83,4 +83,18 @@ class DishHandlerTest {
         // Assert
         verify(dishServicePort, times(1)).actualizarPlato(idPlato, 40000, "Nueva descripción");
     }
+
+    @Test
+    void cambiarEstadoPlato_debeLlamarAlPuertoDelDominioConParametrosCorrectos() {
+        // Arrange
+        Long idPlato = 1L;
+        com.pragma.powerup.application.dto.request.DishStatusRequestDto statusDto =
+                new com.pragma.powerup.application.dto.request.DishStatusRequestDto(false);
+
+        // Act
+        dishHandler.cambiarEstadoPlato(idPlato, statusDto);
+
+        // Assert
+        verify(dishServicePort, times(1)).cambiarEstadoPlato(idPlato, false);
+    }
 }

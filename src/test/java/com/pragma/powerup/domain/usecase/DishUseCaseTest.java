@@ -242,4 +242,52 @@ class DishUseCaseTest {
         verify(dishPersistencePort, never()).obtenerPlatoPorId(any());
         verify(dishPersistencePort, never()).actualizarPlato(any());
     }
+
+    @Test
+    void cambiarEstadoPlato_propietarioValido_cambiaEstadoAFalseYActualiza() {
+        // Arrange
+        Long idPlato = 1L;
+        platoValido.setActivo(true);
+        when(dishPersistencePort.obtenerPlatoPorId(idPlato)).thenReturn(platoValido);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(1L);
+
+        // Act
+        dishUseCase.cambiarEstadoPlato(idPlato, false);
+
+        // Assert
+        assertEquals(false, platoValido.getActivo());
+        verify(dishPersistencePort).obtenerPlatoPorId(idPlato);
+        verify(restaurantPersistencePort).obtenerPorId(1L);
+        verify(authenticatedUserPort).obtenerIdUsuarioAutenticado();
+        verify(dishPersistencePort).actualizarPlato(platoValido);
+    }
+
+    @Test
+    void cambiarEstadoPlato_usuarioNoEsPropietario_lanzaUsuarioNoAutorizadoException() {
+        // Arrange
+        Long idPlato = 1L;
+        when(dishPersistencePort.obtenerPlatoPorId(idPlato)).thenReturn(platoValido);
+        when(restaurantPersistencePort.obtenerPorId(1L)).thenReturn(restauranteValido);
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(999L);
+
+        // Act & Assert
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                dishUseCase.cambiarEstadoPlato(idPlato, false)
+        );
+        verify(dishPersistencePort, never()).actualizarPlato(any());
+    }
+
+    @Test
+    void cambiarEstadoPlato_platoNoExiste_lanzaPlatoNoEncontradoException() {
+        // Arrange
+        Long idPlatoInexistente = 999L;
+        when(dishPersistencePort.obtenerPlatoPorId(idPlatoInexistente)).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(PlatoNoEncontradoException.class, () ->
+                dishUseCase.cambiarEstadoPlato(idPlatoInexistente, false)
+        );
+        verify(dishPersistencePort, never()).actualizarPlato(any());
+    }
 }

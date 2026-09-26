@@ -47,6 +47,21 @@ public class DishUseCase implements IDishServicePort {
     @Override
     public void actualizarPlato(Long id, Integer precio, String descripcion) {
         validarPrecio(precio);
+        DishModel platoExistente = obtenerPlatoValidandoPropietario(id);
+
+        platoExistente.setPrecio(precio);
+        platoExistente.setDescripcion(descripcion);
+        dishPersistencePort.actualizarPlato(platoExistente);
+    }
+
+    @Override
+    public void cambiarEstadoPlato(Long id, Boolean activo) {
+        DishModel platoExistente = obtenerPlatoValidandoPropietario(id);
+        platoExistente.setActivo(activo);
+        dishPersistencePort.actualizarPlato(platoExistente);
+    }
+
+    private DishModel obtenerPlatoValidandoPropietario(Long id) {
         DishModel platoExistente = dishPersistencePort.obtenerPlatoPorId(id);
         if (platoExistente == null) {
             throw new PlatoNoEncontradoException();
@@ -54,10 +69,7 @@ public class DishUseCase implements IDishServicePort {
 
         RestaurantModel restaurante = obtenerRestauranteValidado(platoExistente.getRestaurante());
         validarPropietarioDelRestaurante(restaurante);
-
-        platoExistente.setPrecio(precio);
-        platoExistente.setDescripcion(descripcion);
-        dishPersistencePort.actualizarPlato(platoExistente);
+        return platoExistente;
     }
 
     private void validarPrecio(Integer precio) {
