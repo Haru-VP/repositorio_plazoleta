@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.TelefonoInvalidoException;
 import com.pragma.powerup.domain.exception.UsuarioNoEsPropietarioException;
 import com.pragma.powerup.domain.model.RestaurantModel;
@@ -15,8 +16,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -129,5 +136,45 @@ class RestaurantUseCaseTest {
         // Act & Assert
         assertThrows(NitYaExisteException.class, () -> restaurantUseCase.guardarRestaurante(restauranteValido));
         verify(restaurantPersistencePort, never()).guardarRestaurante(any());
+    }
+
+    @Test
+    void listarRestaurantes_exitoso() {
+        // Arrange
+        List<RestaurantModel> listaEsperada = Collections.singletonList(restauranteValido);
+        when(restaurantPersistencePort.listarRestaurantes(0, 10)).thenReturn(listaEsperada);
+
+        // Act
+        List<RestaurantModel> resultado = restaurantUseCase.listarRestaurantes(0, 10);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("Restaurante El Gran Sabor 2", resultado.get(0).getNombre());
+        verify(restaurantPersistencePort, times(1)).listarRestaurantes(0, 10);
+    }
+
+    @Test
+    void listarRestaurantes_paginaNegativa_lanzaExcepcion() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class,
+                () -> restaurantUseCase.listarRestaurantes(-1, 10));
+        verify(restaurantPersistencePort, never()).listarRestaurantes(anyInt(), anyInt());
+    }
+
+    @Test
+    void listarRestaurantes_tamanioMenorOIgualACero_lanzaExcepcion() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class,
+                () -> restaurantUseCase.listarRestaurantes(0, 0));
+        verify(restaurantPersistencePort, never()).listarRestaurantes(anyInt(), anyInt());
+    }
+
+    @Test
+    void listarRestaurantes_tamanioNegativo_lanzaExcepcion() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class,
+                () -> restaurantUseCase.listarRestaurantes(0, -5));
+        verify(restaurantPersistencePort, never()).listarRestaurantes(anyInt(), anyInt());
     }
 }

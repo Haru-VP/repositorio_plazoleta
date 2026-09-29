@@ -36,6 +36,7 @@ public class SecurityConfiguration {
                         "/webjars/**"
                 ).permitAll()
                 .antMatchers(HttpMethod.POST, "/api/v1/restaurant").hasRole("ADMINISTRADOR")
+                .antMatchers(HttpMethod.GET, "/api/v1/restaurant", "/api/v1/restaurant/**").hasRole("CLIENTE")
                 .antMatchers(HttpMethod.POST, "/api/v1/dish").hasRole("PROPIETARIO")
                 .antMatchers(HttpMethod.PUT, "/api/v1/dish/**").hasRole("PROPIETARIO")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/dish/**").hasRole("PROPIETARIO")

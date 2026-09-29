@@ -111,6 +111,56 @@
             "description": "Datos de entrada invÃ¡lidos o reglas de negocio no cumplidas"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Restaurantes"
+        ],
+        "summary": "Listar restaurantes ordenados alfabéticamente de forma paginada",
+        "operationId": "listarRestaurantes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de restaurantes obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RestaurantResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          }
+        }
       }
     },
     "/api/v1/dish": {
@@ -168,7 +218,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "": "#/components/schemas/DishStatusRequestDto"
+                "$ref": "#/components/schemas/DishStatusRequestDto"
               }
             }
           },
@@ -326,6 +376,22 @@
           "activo"
         ],
         "description": "Datos para habilitar o deshabilitar un plato en el menú"
+      },
+      "RestaurantResponseDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del restaurante",
+            "example": "Restaurante El Buen Sabor"
+          },
+          "urlLogo": {
+            "type": "string",
+            "description": "URL accesible del logotipo del restaurante",
+            "example": "https://misimagenes.com/logos/elbuensabor.png"
+          }
+        },
+        "description": "Datos del restaurante para clientes (nombre y logotipo)"
       }
     },
     "securitySchemes": {

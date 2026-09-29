@@ -4,6 +4,7 @@ import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
 import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
@@ -100,6 +101,13 @@ public class ControllerAdvisor {
             PlatoNoEncontradoException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PLATO_NO_ENCONTRADO.getMessage()));
+    }
+
+    @ExceptionHandler(ParametrosPaginacionInvalidosException.class)
+    public ResponseEntity<Map<String, String>> handleParametrosPaginacionInvalidosException(
+            ParametrosPaginacionInvalidosException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PARAMETROS_PAGINACION_INVALIDOS.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

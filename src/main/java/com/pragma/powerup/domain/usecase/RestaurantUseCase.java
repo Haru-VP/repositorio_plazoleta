@@ -4,12 +4,14 @@ import com.pragma.powerup.domain.api.IRestaurantServicePort;
 import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.TelefonoInvalidoException;
 import com.pragma.powerup.domain.exception.UsuarioNoEsPropietarioException;
 import com.pragma.powerup.domain.model.RestaurantModel;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
 import com.pragma.powerup.domain.spi.IUserValidationServicePort;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class RestaurantUseCase implements IRestaurantServicePort {
@@ -36,6 +38,14 @@ public class RestaurantUseCase implements IRestaurantServicePort {
         validarUnicidadNit(restaurantModel.getNit());
 
         restaurantPersistencePort.guardarRestaurante(restaurantModel);
+    }
+
+    @Override
+    public List<RestaurantModel> listarRestaurantes(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ParametrosPaginacionInvalidosException();
+        }
+        return restaurantPersistencePort.listarRestaurantes(page, size);
     }
 
     private void validarNombre(String nombre) {

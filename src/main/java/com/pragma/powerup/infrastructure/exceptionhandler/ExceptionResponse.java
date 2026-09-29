@@ -11,7 +11,8 @@ public enum ExceptionResponse {
     RESTAURANTE_NO_ENCONTRADO("El restaurante especificado no existe en el sistema"),
     CATEGORIA_NO_ENCONTRADA("La categoría especificada no existe en el sistema"),
     PLATO_NO_ENCONTRADO("El plato especificado no existe en el sistema"),
-    USUARIO_NO_AUTORIZADO("El usuario autenticado no tiene permisos para realizar esta acción sobre este restaurante");
+    USUARIO_NO_AUTORIZADO("El usuario autenticado no tiene permisos para realizar esta acción sobre este restaurante"),
+    PARAMETROS_PAGINACION_INVALIDOS("Los parámetros de paginación deben ser válidos (page >= 0 y size > 0)");
 
     private final String message;
 

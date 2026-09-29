@@ -6,6 +6,12 @@ import com.pragma.powerup.infrastructure.out.jpa.entity.RestaurantEntity;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IRestaurantEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IRestaurantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
@@ -34,5 +40,12 @@ public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
         return restaurantRepository.findById(id)
                 .map(restaurantEntityMapper::toRestaurantModel)
                 .orElse(null);
+    }
+
+    @Override
+    public List<RestaurantModel> listarRestaurantes(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+        Page<RestaurantEntity> restaurantEntityPage = restaurantRepository.findAll(pageable);
+        return restaurantEntityMapper.toRestaurantModelList(restaurantEntityPage.getContent());
     }
 }
