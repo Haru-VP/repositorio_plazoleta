@@ -2,6 +2,7 @@ package com.pragma.powerup.domain.usecase;
 
 import com.pragma.powerup.domain.api.IDishServicePort;
 import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
@@ -13,6 +14,8 @@ import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.ICategoryPersistencePort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
+
+import java.util.List;
 
 public class DishUseCase implements IDishServicePort {
 
@@ -59,6 +62,20 @@ public class DishUseCase implements IDishServicePort {
         DishModel platoExistente = obtenerPlatoValidandoPropietario(id);
         platoExistente.setActivo(activo);
         dishPersistencePort.actualizarPlato(platoExistente);
+    }
+
+    @Override
+    public List<DishModel> listarPlatosPorRestaurante(Long idRestaurante, Long idCategoria, int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ParametrosPaginacionInvalidosException();
+        }
+        if (!restaurantPersistencePort.existePorId(idRestaurante)) {
+            throw new RestauranteNoEncontradoException();
+        }
+        if (idCategoria != null && !categoryPersistencePort.existePorId(idCategoria)) {
+            throw new CategoriaNoEncontradaException();
+        }
+        return dishPersistencePort.listarPlatosPorRestaurante(idRestaurante, idCategoria, page, size);
     }
 
     private DishModel obtenerPlatoValidandoPropietario(Long id) {

@@ -1,6 +1,7 @@
 package com.pragma.powerup.domain.usecase;
 
 import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
@@ -19,11 +20,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -289,5 +296,86 @@ class DishUseCaseTest {
                 dishUseCase.cambiarEstadoPlato(idPlatoInexistente, false)
         );
         verify(dishPersistencePort, never()).actualizarPlato(any());
+    }
+
+    @Test
+    void listarPlatosPorRestaurante_conCategoria_exitoso() {
+        // Arrange
+        Long idRestaurante = 1L;
+        Long idCategoria = 1L;
+        when(restaurantPersistencePort.existePorId(idRestaurante)).thenReturn(true);
+        when(categoryPersistencePort.existePorId(idCategoria)).thenReturn(true);
+        when(dishPersistencePort.listarPlatosPorRestaurante(idRestaurante, idCategoria, 0, 10))
+                .thenReturn(Collections.singletonList(platoValido));
+
+        // Act
+        List<DishModel> resultado = dishUseCase.listarPlatosPorRestaurante(idRestaurante, idCategoria, 0, 10);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("Bandeja Paisa", resultado.get(0).getNombre());
+        verify(dishPersistencePort, times(1)).listarPlatosPorRestaurante(idRestaurante, idCategoria, 0, 10);
+    }
+
+    @Test
+    void listarPlatosPorRestaurante_sinCategoria_exitoso() {
+        // Arrange
+        Long idRestaurante = 1L;
+        when(restaurantPersistencePort.existePorId(idRestaurante)).thenReturn(true);
+        when(dishPersistencePort.listarPlatosPorRestaurante(idRestaurante, null, 0, 10))
+                .thenReturn(Collections.singletonList(platoValido));
+
+        // Act
+        List<DishModel> resultado = dishUseCase.listarPlatosPorRestaurante(idRestaurante, null, 0, 10);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        verify(categoryPersistencePort, never()).existePorId(any());
+        verify(dishPersistencePort, times(1)).listarPlatosPorRestaurante(idRestaurante, null, 0, 10);
+    }
+
+    @Test
+    void listarPlatosPorRestaurante_paginaNegativa_lanzaParametrosPaginacionInvalidosException() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class, () ->
+                dishUseCase.listarPlatosPorRestaurante(1L, null, -1, 10)
+        );
+        verify(dishPersistencePort, never()).listarPlatosPorRestaurante(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void listarPlatosPorRestaurante_tamanioInvalido_lanzaParametrosPaginacionInvalidosException() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class, () ->
+                dishUseCase.listarPlatosPorRestaurante(1L, null, 0, 0)
+        );
+        verify(dishPersistencePort, never()).listarPlatosPorRestaurante(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void listarPlatosPorRestaurante_restauranteNoExiste_lanzaRestauranteNoEncontradoException() {
+        // Arrange
+        when(restaurantPersistencePort.existePorId(999L)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(RestauranteNoEncontradoException.class, () ->
+                dishUseCase.listarPlatosPorRestaurante(999L, null, 0, 10)
+        );
+        verify(dishPersistencePort, never()).listarPlatosPorRestaurante(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void listarPlatosPorRestaurante_categoriaNoExiste_lanzaCategoriaNoEncontradaException() {
+        // Arrange
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(categoryPersistencePort.existePorId(999L)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(CategoriaNoEncontradaException.class, () ->
+                dishUseCase.listarPlatosPorRestaurante(1L, 999L, 0, 10)
+        );
+        verify(dishPersistencePort, never()).listarPlatosPorRestaurante(any(), any(), anyInt(), anyInt());
     }
 }

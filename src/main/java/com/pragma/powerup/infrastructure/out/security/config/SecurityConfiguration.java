@@ -38,6 +38,7 @@ public class SecurityConfiguration {
                 .antMatchers(HttpMethod.POST, "/api/v1/restaurant").hasRole("ADMINISTRADOR")
                 .antMatchers(HttpMethod.GET, "/api/v1/restaurant", "/api/v1/restaurant/**").hasRole("CLIENTE")
                 .antMatchers(HttpMethod.POST, "/api/v1/dish").hasRole("PROPIETARIO")
+                .antMatchers(HttpMethod.GET, "/api/v1/dish", "/api/v1/dish/**").hasRole("CLIENTE")
                 .antMatchers(HttpMethod.PUT, "/api/v1/dish/**").hasRole("PROPIETARIO")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/dish/**").hasRole("PROPIETARIO")
                 .anyRequest().authenticated()

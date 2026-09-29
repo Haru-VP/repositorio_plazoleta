@@ -194,6 +194,154 @@
             "description": "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Listar platos activos filtrados por restaurante y categoría con paginación",
+        "operationId": "listarPlatos",
+        "parameters": [
+          {
+            "name": "idRestaurante",
+            "in": "query",
+            "description": "Identificador del restaurante",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "idCategoria",
+            "in": "query",
+            "description": "Identificador opcional de la categoría para filtrar",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de platos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platos listados exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DishResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          },
+          "404": {
+            "description": "Restaurante o categoría no encontrados"
+          }
+        }
+      }
+    },
+    "/api/v1/dish/restaurante/{idRestaurante}": {
+      "get": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Listar platos activos de un restaurante con filtro opcional por categoría y paginación",
+        "operationId": "listarPlatosPorRestaurante",
+        "parameters": [
+          {
+            "name": "idRestaurante",
+            "in": "path",
+            "description": "Identificador del restaurante",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "idCategoria",
+            "in": "query",
+            "description": "Identificador opcional de la categoría para filtrar",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de platos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platos listados exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DishResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          },
+          "404": {
+            "description": "Restaurante o categoría no encontrados"
+          }
+        }
       }
     },
     "/api/v1/dish/{id}/estado": {
@@ -392,6 +540,44 @@
           }
         },
         "description": "Datos del restaurante para clientes (nombre y logotipo)"
+      },
+      "DishResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador único del plato",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del plato",
+            "example": "Bandeja Paisa"
+          },
+          "precio": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Precio del plato en pesos colombianos",
+            "example": 35000
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción detallada de ingredientes",
+            "example": "Frijoles, arroz, carne molida, chicharrón, huevo y aguacate"
+          },
+          "urlImagen": {
+            "type": "string",
+            "description": "URL accesible de la imagen del plato",
+            "example": "https://misimagenes.com/platos/bandeja-paisa.png"
+          },
+          "categoria": {
+            "type": "string",
+            "description": "Nombre de la categoría del plato",
+            "example": "PLATO FUERTE"
+          }
+        },
+        "description": "Datos de un plato para la visualización del menú por el cliente"
       }
     },
     "securitySchemes": {
