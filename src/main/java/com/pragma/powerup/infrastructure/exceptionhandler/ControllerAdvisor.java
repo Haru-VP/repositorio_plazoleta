@@ -1,11 +1,16 @@
 package com.pragma.powerup.infrastructure.exceptionhandler;
 
+import com.pragma.powerup.domain.exception.CantidadPlatoInvalidaException;
 import com.pragma.powerup.domain.exception.CategoriaNoEncontradaException;
+import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
 import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
 import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
+import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
+import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
+import com.pragma.powerup.domain.exception.PlatosDeDiferenteRestauranteException;
 import com.pragma.powerup.domain.exception.PrecioInvalidoException;
 import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
 import com.pragma.powerup.domain.exception.TelefonoInvalidoException;
@@ -108,6 +113,41 @@ public class ControllerAdvisor {
             ParametrosPaginacionInvalidosException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PARAMETROS_PAGINACION_INVALIDOS.getMessage()));
+    }
+
+    @ExceptionHandler(ClienteTienePedidoActivoException.class)
+    public ResponseEntity<Map<String, String>> handleClienteTienePedidoActivoException(
+            ClienteTienePedidoActivoException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.CLIENTE_TIENE_PEDIDO_ACTIVO.getMessage()));
+    }
+
+    @ExceptionHandler(PedidoSinPlatosException.class)
+    public ResponseEntity<Map<String, String>> handlePedidoSinPlatosException(
+            PedidoSinPlatosException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_SIN_PLATOS.getMessage()));
+    }
+
+    @ExceptionHandler(CantidadPlatoInvalidaException.class)
+    public ResponseEntity<Map<String, String>> handleCantidadPlatoInvalidaException(
+            CantidadPlatoInvalidaException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.CANTIDAD_PLATO_INVALIDA.getMessage()));
+    }
+
+    @ExceptionHandler(PlatosDeDiferenteRestauranteException.class)
+    public ResponseEntity<Map<String, String>> handlePlatosDeDiferenteRestauranteException(
+            PlatosDeDiferenteRestauranteException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PLATOS_DIFERENTE_RESTAURANTE.getMessage()));
+    }
+
+    @ExceptionHandler(PlatoInactivoException.class)
+    public ResponseEntity<Map<String, String>> handlePlatoInactivoException(
+            PlatoInactivoException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PLATO_INACTIVO.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

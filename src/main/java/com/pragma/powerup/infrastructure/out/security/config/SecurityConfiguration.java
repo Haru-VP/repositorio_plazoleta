@@ -41,6 +41,7 @@ public class SecurityConfiguration {
                 .antMatchers(HttpMethod.GET, "/api/v1/dish", "/api/v1/dish/**").hasRole("CLIENTE")
                 .antMatchers(HttpMethod.PUT, "/api/v1/dish/**").hasRole("PROPIETARIO")
                 .antMatchers(HttpMethod.PATCH, "/api/v1/dish/**").hasRole("PROPIETARIO")
+                .antMatchers(HttpMethod.POST, "/api/v1/order", "/api/v1/order/**").hasRole("CLIENTE")
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

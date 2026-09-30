@@ -12,7 +12,12 @@ public enum ExceptionResponse {
     CATEGORIA_NO_ENCONTRADA("La categoría especificada no existe en el sistema"),
     PLATO_NO_ENCONTRADO("El plato especificado no existe en el sistema"),
     USUARIO_NO_AUTORIZADO("El usuario autenticado no tiene permisos para realizar esta acción sobre este restaurante"),
-    PARAMETROS_PAGINACION_INVALIDOS("Los parámetros de paginación deben ser válidos (page >= 0 y size > 0)");
+    PARAMETROS_PAGINACION_INVALIDOS("Los parámetros de paginación deben ser válidos (page >= 0 y size > 0)"),
+    CLIENTE_TIENE_PEDIDO_ACTIVO("El cliente ya tiene un pedido en proceso (PENDIENTE, EN_PREPARACION o LISTO)"),
+    PEDIDO_SIN_PLATOS("El pedido debe contener al menos un plato"),
+    CANTIDAD_PLATO_INVALIDA("La cantidad de cada plato debe ser un número entero mayor a cero"),
+    PLATOS_DIFERENTE_RESTAURANTE("Todos los platos del pedido deben pertenecer al mismo restaurante"),
+    PLATO_INACTIVO("Uno o más platos seleccionados no se encuentran activos en el restaurante");
 
     private final String message;
 

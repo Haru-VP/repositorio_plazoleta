@@ -28,11 +28,15 @@
   "tags": [
     {
       "name": "Platos",
-      "description": "Endpoints para la creaciÃ³n, configuraciÃ³n y gestiÃ³n de platos"
+      "description": "Endpoints para la creación, configuración y gestión de platos"
     },
     {
       "name": "Restaurantes",
-      "description": "Endpoints para la creaciÃ³n, configuraciÃ³n y gestiÃ³n de restaurantes"
+      "description": "Endpoints para la creación, configuración y gestión de restaurantes"
+    },
+    {
+      "name": "Pedidos",
+      "description": "Endpoints para la gestión del ciclo de vida de los pedidos"
     }
   ],
   "paths": {
@@ -392,6 +396,42 @@
           }
         ]
       }
+    },
+    "/api/v1/order": {
+      "post": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Realizar un nuevo pedido a un restaurante",
+        "operationId": "realizarPedido",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido realizado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos, platos de diferente restaurante o platos inactivos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          },
+          "404": {
+            "description": "Restaurante o plato no encontrado"
+          },
+          "409": {
+            "description": "El cliente ya tiene un pedido en proceso (PENDIENTE, EN_PREPARACION o LISTO)"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -578,6 +618,52 @@
           }
         },
         "description": "Datos de un plato para la visualización del menú por el cliente"
+      },
+      "OrderDishRequestDto": {
+        "required": [
+          "cantidad",
+          "idPlato"
+        ],
+        "type": "object",
+        "properties": {
+          "idPlato": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador único del plato a ordenar",
+            "example": 1
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "description": "Cantidad deseada del plato (entero mayor a 0)",
+            "example": 2
+          }
+        },
+        "description": "Detalle de un plato y cantidad para el pedido"
+      },
+      "OrderRequestDto": {
+        "required": [
+          "idRestaurante",
+          "platos"
+        ],
+        "type": "object",
+        "properties": {
+          "idRestaurante": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del restaurante al que se le realiza el pedido",
+            "example": 1
+          },
+          "platos": {
+            "type": "array",
+            "description": "Lista de platos con sus respectivas cantidades a ordenar",
+            "items": {
+              "$ref": "#/components/schemas/OrderDishRequestDto"
+            }
+          }
+        },
+        "description": "Datos para realizar un pedido a un restaurante"
       }
     },
     "securitySchemes": {

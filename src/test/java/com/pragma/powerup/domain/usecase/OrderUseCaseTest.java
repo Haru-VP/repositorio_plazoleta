@@ -1,0 +1,198 @@
+package com.pragma.powerup.domain.usecase;
+
+import com.pragma.powerup.domain.exception.CantidadPlatoInvalidaException;
+import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
+import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
+import com.pragma.powerup.domain.exception.PlatoInactivoException;
+import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
+import com.pragma.powerup.domain.exception.PlatosDeDiferenteRestauranteException;
+import com.pragma.powerup.domain.exception.RestauranteNoEncontradoException;
+import com.pragma.powerup.domain.exception.UsuarioNoAutorizadoException;
+import com.pragma.powerup.domain.model.CategoryModel;
+import com.pragma.powerup.domain.model.DishModel;
+import com.pragma.powerup.domain.model.OrderDishModel;
+import com.pragma.powerup.domain.model.OrderModel;
+import com.pragma.powerup.domain.model.OrderStatus;
+import com.pragma.powerup.domain.model.RestaurantModel;
+import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
+import com.pragma.powerup.domain.spi.IDishPersistencePort;
+import com.pragma.powerup.domain.spi.IOrderPersistencePort;
+import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class OrderUseCaseTest {
+
+    @Mock
+    private IOrderPersistencePort orderPersistencePort;
+
+    @Mock
+    private IRestaurantPersistencePort restaurantPersistencePort;
+
+    @Mock
+    private IDishPersistencePort dishPersistencePort;
+
+    @Mock
+    private IAuthenticatedUserPort authenticatedUserPort;
+
+    @InjectMocks
+    private OrderUseCase orderUseCase;
+
+    private RestaurantModel restauranteValido;
+    private DishModel platoValido;
+    private OrderModel ordenValida;
+
+    @BeforeEach
+    void setUp() {
+        restauranteValido = new RestaurantModel(1L, "Restaurante Central", "123456789", "Calle 10 # 20-30", "+573001234567", "https://img.com/logo.png", 2L);
+        CategoryModel categoriaValida = new CategoryModel(1L, "PLATO FUERTE", "Plato fuerte");
+        platoValido = new DishModel(10L, "Bandeja Paisa", categoriaValida, "Deliciosa bandeja", 35000, restauranteValido, "https://img.com/plato.png", true);
+
+        OrderDishModel item = new OrderDishModel(null, null, new DishModel(10L, null, null, null, null, null, null, null), 2);
+        List<OrderDishModel> items = new ArrayList<>();
+        items.add(item);
+
+        ordenValida = new OrderModel(null, null, null, null, null, restauranteValido, items);
+    }
+
+    @Test
+    void realizarPedido_exitoso() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(dishPersistencePort.obtenerPlatoPorId(10L)).thenReturn(platoValido);
+
+        // Act
+        orderUseCase.realizarPedido(ordenValida);
+
+        // Assert
+        assertEquals(5L, ordenValida.getIdCliente());
+        assertEquals(OrderStatus.PENDIENTE.name(), ordenValida.getEstado());
+        assertEquals(LocalDate.now(), ordenValida.getFecha());
+        assertNull(ordenValida.getIdChef());
+        assertEquals(1, ordenValida.getPedidosPlatos().size());
+        assertEquals(platoValido, ordenValida.getPedidosPlatos().get(0).getPlato());
+        verify(orderPersistencePort, times(1)).guardarPedido(ordenValida);
+    }
+
+    @Test
+    void realizarPedido_clienteNoAutenticado_lanzaUsuarioNoAutorizadoException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(UsuarioNoAutorizadoException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_clienteTienePedidoActivo_lanzaClienteTienePedidoActivoException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(ClienteTienePedidoActivoException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_restauranteNoExiste_lanzaRestauranteNoEncontradoException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(RestauranteNoEncontradoException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_listaPlatosVacia_lanzaPedidoSinPlatosException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        ordenValida.setPedidosPlatos(Collections.emptyList());
+
+        // Act & Assert
+        assertThrows(PedidoSinPlatosException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_cantidadInvalida_lanzaCantidadPlatoInvalidaException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        ordenValida.getPedidosPlatos().get(0).setCantidad(0);
+
+        // Act & Assert
+        assertThrows(CantidadPlatoInvalidaException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_platoNoExiste_lanzaPlatoNoEncontradoException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(dishPersistencePort.obtenerPlatoPorId(10L)).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(PlatoNoEncontradoException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_platoDeDiferenteRestaurante_lanzaPlatosDeDiferenteRestauranteException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        RestaurantModel otroRestaurante = new RestaurantModel(99L, "Otro", "999", "Dir", "+57300", "url", 3L);
+        DishModel platoDeOtroRestaurante = new DishModel(10L, "Plato", null, "Desc", 20000, otroRestaurante, "url", true);
+        when(dishPersistencePort.obtenerPlatoPorId(10L)).thenReturn(platoDeOtroRestaurante);
+
+        // Act & Assert
+        assertThrows(PlatosDeDiferenteRestauranteException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_platoInactivo_lanzaPlatoInactivoException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        DishModel platoInactivo = new DishModel(10L, "Plato Inactivo", null, "Desc", 20000, restauranteValido, "url", false);
+        when(dishPersistencePort.obtenerPlatoPorId(10L)).thenReturn(platoInactivo);
+
+        // Act & Assert
+        assertThrows(PlatoInactivoException.class, () -> orderUseCase.realizarPedido(ordenValida));
+        verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+}
