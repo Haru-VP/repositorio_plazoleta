@@ -31,6 +31,7 @@ import com.pragma.powerup.infrastructure.out.jpa.repository.ICategoryRepository;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IDishRepository;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IObjectRepository;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IOrderRepository;
+import com.pragma.powerup.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IRestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -55,6 +56,7 @@ public class BeanConfiguration {
 
     private final IOrderRepository orderRepository;
     private final IOrderEntityMapper orderEntityMapper;
+    private final IRestaurantEmployeeRepository restaurantEmployeeRepository;
 
     @Bean
     public IObjectPersistencePort objectPersistencePort() {
@@ -98,7 +100,7 @@ public class BeanConfiguration {
 
     @Bean
     public IOrderPersistencePort orderPersistencePort() {
-        return new OrderJpaAdapter(orderRepository, orderEntityMapper);
+        return new OrderJpaAdapter(orderRepository, orderEntityMapper, restaurantEmployeeRepository);
     }
 
     @Bean

@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.api.IOrderServicePort;
 import com.pragma.powerup.domain.exception.CantidadPlatoInvalidaException;
 import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -92,5 +93,29 @@ public class OrderUseCase implements IOrderServicePort {
         orderModel.setIdChef(null);
 
         orderPersistencePort.guardarPedido(orderModel);
+    }
+
+    @Override
+    public List<OrderModel> listarPedidosPorEstado(String estado, Long idRestaurante, int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new ParametrosPaginacionInvalidosException();
+        }
+
+        if (idRestaurante == null) {
+            Long idEmpleado = authenticatedUserPort.obtenerIdUsuarioAutenticado();
+            if (idEmpleado != null) {
+                idRestaurante = orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado);
+            }
+        }
+
+        if (idRestaurante != null && !restaurantPersistencePort.existePorId(idRestaurante)) {
+            throw new RestauranteNoEncontradoException();
+        }
+
+        String estadoFiltrado = (estado != null && !estado.trim().isEmpty())
+                ? estado.trim().toUpperCase()
+                : OrderStatus.PENDIENTE.name();
+
+        return orderPersistencePort.listarPedidosPorEstado(estadoFiltrado, idRestaurante, page, size);
     }
 }

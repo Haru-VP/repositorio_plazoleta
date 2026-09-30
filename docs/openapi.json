@@ -431,6 +431,154 @@
             "description": "El cliente ya tiene un pedido en proceso (PENDIENTE, EN_PREPARACION o LISTO)"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Listar pedidos filtrando por estado y paginación (Solo Empleados)",
+        "operationId": "listarPedidos",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "description": "Estado por el cual filtrar los pedidos (PENDIENTE, EN_PREPARACION, LISTO, ENTREGADO, CANCELADO). Por defecto PENDIENTE",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "PENDIENTE"
+            }
+          },
+          {
+            "name": "idRestaurante",
+            "in": "query",
+            "description": "Identificador opcional del restaurante (si no se proporciona se resuelve del empleado autenticado)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO"
+          },
+          "404": {
+            "description": "Restaurante no encontrado"
+          }
+        }
+      }
+    },
+    "/api/v1/order/restaurante/{idRestaurante}": {
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Listar pedidos de un restaurante específico filtrando por estado y paginación (Solo Empleados)",
+        "operationId": "listarPedidosPorRestaurante",
+        "parameters": [
+          {
+            "name": "idRestaurante",
+            "in": "path",
+            "description": "Identificador del restaurante",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "description": "Estado por el cual filtrar los pedidos",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "PENDIENTE"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO"
+          },
+          "404": {
+            "description": "Restaurante no encontrado"
+          }
+        }
       }
     }
   },
@@ -664,6 +812,104 @@
           }
         },
         "description": "Datos para realizar un pedido a un restaurante"
+      },
+      "OrderDishResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del plato",
+            "example": 10
+          },
+          "idPlato": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del plato (alias)",
+            "example": 10
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del plato",
+            "example": "Bandeja Paisa"
+          },
+          "precio": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Precio del plato",
+            "example": 35000
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción de ingredientes",
+            "example": "Frijoles, arroz, carne molida, chicharrón, huevo y aguacate"
+          },
+          "urlImagen": {
+            "type": "string",
+            "description": "URL de la imagen del plato",
+            "example": "https://misimagenes.com/platos/bandeja-paisa.png"
+          },
+          "categoria": {
+            "type": "string",
+            "description": "Nombre de la categoría del plato",
+            "example": "PLATO FUERTE"
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Cantidad ordenada del plato",
+            "example": 2
+          }
+        },
+        "description": "Detalle de un plato y cantidad ordenada"
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador único del pedido",
+            "example": 1
+          },
+          "idCliente": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del cliente que realizó el pedido",
+            "example": 5
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha de realización del pedido",
+            "example": "2026-09-29"
+          },
+          "estado": {
+            "type": "string",
+            "description": "Estado actual del pedido",
+            "example": "PENDIENTE"
+          },
+          "idChef": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del chef asignado (null si no ha sido asignado)",
+            "example": null
+          },
+          "idRestaurante": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del restaurante al que pertenece el pedido",
+            "example": 1
+          },
+          "platos": {
+            "type": "array",
+            "description": "Lista de platos con sus detalles y cantidades incluidas en el pedido",
+            "items": {
+              "$ref": "#/components/schemas/OrderDishResponseDto"
+            }
+          }
+        },
+        "description": "Datos de un pedido para visualización por el personal del restaurante"
       }
     },
     "securitySchemes": {

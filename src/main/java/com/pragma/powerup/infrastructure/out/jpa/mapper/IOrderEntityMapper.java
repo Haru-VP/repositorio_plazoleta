@@ -9,6 +9,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring",
         uses = {IRestaurantEntityMapper.class, IDishEntityMapper.class},
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -19,6 +21,8 @@ public interface IOrderEntityMapper {
     OrderEntity toEntity(OrderModel orderModel);
 
     OrderModel toModel(OrderEntity orderEntity);
+
+    List<OrderModel> toModelList(List<OrderEntity> orderEntityList);
 
     OrderDishEntity toEntity(OrderDishModel orderDishModel);
 

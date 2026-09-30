@@ -2,6 +2,7 @@ package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.OrderDishRequestDto;
 import com.pragma.powerup.application.dto.request.OrderRequestDto;
+import com.pragma.powerup.application.dto.response.OrderResponseDto;
 import com.pragma.powerup.application.handler.IOrderHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,10 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OrderRestControllerTest {
@@ -38,5 +42,39 @@ class OrderRestControllerTest {
         // Assert
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         verify(orderHandler, times(1)).realizarPedido(requestDto);
+    }
+
+    @Test
+    void listarPedidos_retornaOkConLista() {
+        // Arrange
+        OrderResponseDto dto = new OrderResponseDto();
+        when(orderHandler.listarPedidosPorEstado("PENDIENTE", 1L, 0, 10))
+                .thenReturn(Collections.singletonList(dto));
+
+        // Act
+        ResponseEntity<List<OrderResponseDto>> response = orderRestController.listarPedidos("PENDIENTE", 1L, 0, 10);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        verify(orderHandler, times(1)).listarPedidosPorEstado("PENDIENTE", 1L, 0, 10);
+    }
+
+    @Test
+    void listarPedidosPorRestaurante_retornaOkConLista() {
+        // Arrange
+        OrderResponseDto dto = new OrderResponseDto();
+        when(orderHandler.listarPedidosPorEstado("PENDIENTE", 1L, 0, 10))
+                .thenReturn(Collections.singletonList(dto));
+
+        // Act
+        ResponseEntity<List<OrderResponseDto>> response = orderRestController.listarPedidosPorRestaurante(1L, "PENDIENTE", 0, 10);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        verify(orderHandler, times(1)).listarPedidosPorEstado("PENDIENTE", 1L, 0, 10);
     }
 }

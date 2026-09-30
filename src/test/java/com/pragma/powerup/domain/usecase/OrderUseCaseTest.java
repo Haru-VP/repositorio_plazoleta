@@ -2,6 +2,7 @@ package com.pragma.powerup.domain.usecase;
 
 import com.pragma.powerup.domain.exception.CantidadPlatoInvalidaException;
 import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
+import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -31,9 +32,12 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -194,5 +198,88 @@ class OrderUseCaseTest {
         // Act & Assert
         assertThrows(PlatoInactivoException.class, () -> orderUseCase.realizarPedido(ordenValida));
         verify(orderPersistencePort, never()).guardarPedido(any());
+    }
+
+    @Test
+    void listarPedidosPorEstado_conRestauranteYEstado_exitoso() {
+        // Arrange
+        Long idRestaurante = 1L;
+        String estado = "PENDIENTE";
+        when(restaurantPersistencePort.existePorId(idRestaurante)).thenReturn(true);
+        when(orderPersistencePort.listarPedidosPorEstado("PENDIENTE", idRestaurante, 0, 10))
+                .thenReturn(Collections.singletonList(ordenValida));
+
+        // Act
+        List<OrderModel> resultado = orderUseCase.listarPedidosPorEstado(estado, idRestaurante, 0, 10);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        verify(orderPersistencePort, times(1)).listarPedidosPorEstado("PENDIENTE", idRestaurante, 0, 10);
+    }
+
+    @Test
+    void listarPedidosPorEstado_sinRestaurante_resuelvePorEmpleado_exitoso() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(8L);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(8L)).thenReturn(1L);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(orderPersistencePort.listarPedidosPorEstado("PENDIENTE", 1L, 0, 10))
+                .thenReturn(Collections.singletonList(ordenValida));
+
+        // Act
+        List<OrderModel> resultado = orderUseCase.listarPedidosPorEstado("PENDIENTE", null, 0, 10);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        verify(orderPersistencePort, times(1)).listarPedidosPorEstado("PENDIENTE", 1L, 0, 10);
+    }
+
+    @Test
+    void listarPedidosPorEstado_estadoNull_usaDefaultPendiente() {
+        // Arrange
+        Long idRestaurante = 1L;
+        when(restaurantPersistencePort.existePorId(idRestaurante)).thenReturn(true);
+        when(orderPersistencePort.listarPedidosPorEstado("PENDIENTE", idRestaurante, 0, 10))
+                .thenReturn(Collections.singletonList(ordenValida));
+
+        // Act
+        List<OrderModel> resultado = orderUseCase.listarPedidosPorEstado(null, idRestaurante, 0, 10);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        verify(orderPersistencePort, times(1)).listarPedidosPorEstado("PENDIENTE", idRestaurante, 0, 10);
+    }
+
+    @Test
+    void listarPedidosPorEstado_paginaNegativa_lanzaParametrosPaginacionInvalidosException() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class, () ->
+                orderUseCase.listarPedidosPorEstado("PENDIENTE", 1L, -1, 10)
+        );
+        verify(orderPersistencePort, never()).listarPedidosPorEstado(anyString(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void listarPedidosPorEstado_tamanioInvalido_lanzaParametrosPaginacionInvalidosException() {
+        // Act & Assert
+        assertThrows(ParametrosPaginacionInvalidosException.class, () ->
+                orderUseCase.listarPedidosPorEstado("PENDIENTE", 1L, 0, 0)
+        );
+        verify(orderPersistencePort, never()).listarPedidosPorEstado(anyString(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void listarPedidosPorEstado_restauranteNoExiste_lanzaRestauranteNoEncontradoException() {
+        // Arrange
+        when(restaurantPersistencePort.existePorId(999L)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(RestauranteNoEncontradoException.class, () ->
+                orderUseCase.listarPedidosPorEstado("PENDIENTE", 999L, 0, 10)
+        );
+        verify(orderPersistencePort, never()).listarPedidosPorEstado(anyString(), any(), anyInt(), anyInt());
     }
 }
