@@ -26,6 +26,7 @@ import com.pragma.powerup.domain.spi.IDishPersistencePort;
 import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
 import com.pragma.powerup.domain.spi.IOrderPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
+import com.pragma.powerup.domain.spi.ITrazabilidadServicePort;
 import com.pragma.powerup.domain.spi.IUserValidationServicePort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,6 +73,9 @@ class OrderUseCaseTest {
 
     @Mock
     private IMensajeriaServicePort mensajeriaServicePort;
+
+    @Mock
+    private ITrazabilidadServicePort trazabilidadServicePort;
 
     @InjectMocks
     private OrderUseCase orderUseCase;
@@ -774,5 +778,40 @@ class OrderUseCaseTest {
                 orderUseCase.cancelarPedido(idPedido)
         );
         verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void realizarPedido_registraTrazabilidadCorrectamente() {
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(5L);
+        when(orderPersistencePort.existePedidoActivoPorCliente(5L)).thenReturn(false);
+        when(restaurantPersistencePort.existePorId(1L)).thenReturn(true);
+        when(dishPersistencePort.obtenerPlatoPorId(10L)).thenReturn(platoValido);
+
+        ordenValida.setId(99L);
+        orderUseCase.realizarPedido(ordenValida);
+
+        verify(orderPersistencePort).guardarPedido(ordenValida);
+        verify(trazabilidadServicePort).registrarCambioEstado(eq(99L), eq(5L), eq(null), eq(null),
+                eq(OrderStatus.PENDIENTE.name()), eq(null), eq(null));
+    }
+
+    @Test
+    void registrarTrazabilidad_noFallaSiServicioTrazabilidadLanzaExcepcion() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.actualizarPedido(any())).thenReturn(pedido);
+        org.mockito.Mockito.doThrow(new RuntimeException("Error en microservicio"))
+                .when(trazabilidadServicePort).registrarCambioEstado(any(), any(), any(), any(), any(), any(), any());
+
+        OrderModel resultado = orderUseCase.cancelarPedido(idPedido);
+
+        assertNotNull(resultado);
+        assertEquals(OrderStatus.CANCELADO.name(), resultado.getEstado());
+        verify(orderPersistencePort).actualizarPedido(pedido);
     }
 }

@@ -25,6 +25,7 @@ import com.pragma.powerup.domain.spi.IDishPersistencePort;
 import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
 import com.pragma.powerup.domain.spi.IOrderPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
+import com.pragma.powerup.domain.spi.ITrazabilidadServicePort;
 import com.pragma.powerup.domain.spi.IUserValidationServicePort;
 
 import java.security.SecureRandom;
@@ -39,6 +40,7 @@ public class OrderUseCase implements IOrderServicePort {
     private final IAuthenticatedUserPort authenticatedUserPort;
     private final IUserValidationServicePort userValidationServicePort;
     private final IMensajeriaServicePort mensajeriaServicePort;
+    private final ITrazabilidadServicePort trazabilidadServicePort;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public OrderUseCase(IOrderPersistencePort orderPersistencePort,
@@ -46,13 +48,25 @@ public class OrderUseCase implements IOrderServicePort {
                         IDishPersistencePort dishPersistencePort,
                         IAuthenticatedUserPort authenticatedUserPort,
                         IUserValidationServicePort userValidationServicePort,
-                        IMensajeriaServicePort mensajeriaServicePort) {
+                        IMensajeriaServicePort mensajeriaServicePort,
+                        ITrazabilidadServicePort trazabilidadServicePort) {
         this.orderPersistencePort = orderPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
         this.dishPersistencePort = dishPersistencePort;
         this.authenticatedUserPort = authenticatedUserPort;
         this.userValidationServicePort = userValidationServicePort;
         this.mensajeriaServicePort = mensajeriaServicePort;
+        this.trazabilidadServicePort = trazabilidadServicePort;
+    }
+
+    public OrderUseCase(IOrderPersistencePort orderPersistencePort,
+                        IRestaurantPersistencePort restaurantPersistencePort,
+                        IDishPersistencePort dishPersistencePort,
+                        IAuthenticatedUserPort authenticatedUserPort,
+                        IUserValidationServicePort userValidationServicePort,
+                        IMensajeriaServicePort mensajeriaServicePort) {
+        this(orderPersistencePort, restaurantPersistencePort, dishPersistencePort,
+                authenticatedUserPort, userValidationServicePort, mensajeriaServicePort, null);
     }
 
     @Override
@@ -109,6 +123,7 @@ public class OrderUseCase implements IOrderServicePort {
         orderModel.setIdChef(null);
 
         orderPersistencePort.guardarPedido(orderModel);
+        registrarTrazabilidadSegura(orderModel.getId(), idCliente, null, null, OrderStatus.PENDIENTE.name(), null, null);
     }
 
     @Override
@@ -164,7 +179,11 @@ public class OrderUseCase implements IOrderServicePort {
         pedido.setEstado(OrderStatus.EN_PREPARACION.name());
         pedido.setIdChef(idEmpleado);
 
-        return orderPersistencePort.actualizarPedido(pedido);
+        OrderModel pedidoActualizado = orderPersistencePort.actualizarPedido(pedido);
+        registrarTrazabilidadSegura(pedido.getId(), pedido.getIdCliente(), null,
+                OrderStatus.PENDIENTE.name(), OrderStatus.EN_PREPARACION.name(), idEmpleado, null);
+
+        return pedidoActualizado;
     }
 
     @Override
@@ -201,6 +220,8 @@ public class OrderUseCase implements IOrderServicePort {
 
         String celular = userValidationServicePort.obtenerCelularUsuario(pedido.getIdCliente());
         mensajeriaServicePort.notificarPedidoListo(celular, pin, pedido.getId());
+        registrarTrazabilidadSegura(pedido.getId(), pedido.getIdCliente(), null,
+                OrderStatus.EN_PREPARACION.name(), OrderStatus.LISTO.name(), idEmpleado, null);
 
         return pedidoActualizado;
     }
@@ -237,7 +258,11 @@ public class OrderUseCase implements IOrderServicePort {
 
         pedido.setEstado(OrderStatus.ENTREGADO.name());
 
-        return orderPersistencePort.actualizarPedido(pedido);
+        OrderModel pedidoActualizado = orderPersistencePort.actualizarPedido(pedido);
+        registrarTrazabilidadSegura(pedido.getId(), pedido.getIdCliente(), null,
+                OrderStatus.LISTO.name(), OrderStatus.ENTREGADO.name(), idEmpleado, null);
+
+        return pedidoActualizado;
     }
 
     @Override
@@ -266,6 +291,23 @@ public class OrderUseCase implements IOrderServicePort {
 
         pedido.setEstado(OrderStatus.CANCELADO.name());
 
-        return orderPersistencePort.actualizarPedido(pedido);
+        OrderModel pedidoActualizado = orderPersistencePort.actualizarPedido(pedido);
+        registrarTrazabilidadSegura(pedido.getId(), idCliente, null,
+                OrderStatus.PENDIENTE.name(), OrderStatus.CANCELADO.name(), null, null);
+
+        return pedidoActualizado;
+    }
+
+    private void registrarTrazabilidadSegura(Long idPedido, Long idCliente, String correoCliente,
+                                            String estadoAnterior, String nuevoEstado,
+                                            Long idEmpleado, String correoEmpleado) {
+        if (trazabilidadServicePort != null && idPedido != null) {
+            try {
+                trazabilidadServicePort.registrarCambioEstado(idPedido, idCliente, correoCliente,
+                        estadoAnterior, nuevoEstado, idEmpleado, correoEmpleado);
+            } catch (Exception ignored) {
+                // Trazabilidad no debe bloquear el flujo principal de pedidos
+            }
+        }
     }
 }

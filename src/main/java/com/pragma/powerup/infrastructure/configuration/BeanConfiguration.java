@@ -16,9 +16,12 @@ import com.pragma.powerup.domain.usecase.DishUseCase;
 import com.pragma.powerup.domain.usecase.ObjectUseCase;
 import com.pragma.powerup.domain.usecase.OrderUseCase;
 import com.pragma.powerup.domain.usecase.RestaurantUseCase;
+import com.pragma.powerup.domain.spi.ITrazabilidadServicePort;
 import com.pragma.powerup.infrastructure.out.feign.adapter.MensajeriaAdapter;
+import com.pragma.powerup.infrastructure.out.feign.adapter.TrazabilidadAdapter;
 import com.pragma.powerup.infrastructure.out.feign.adapter.UserValidationAdapter;
 import com.pragma.powerup.infrastructure.out.feign.client.IMensajeriaFeignClient;
+import com.pragma.powerup.infrastructure.out.feign.client.ITrazabilidadFeignClient;
 import com.pragma.powerup.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.DishJpaAdapter;
@@ -61,6 +64,7 @@ public class BeanConfiguration {
     private final IOrderEntityMapper orderEntityMapper;
     private final IRestaurantEmployeeRepository restaurantEmployeeRepository;
     private final IMensajeriaFeignClient mensajeriaFeignClient;
+    private final ITrazabilidadFeignClient trazabilidadFeignClient;
 
     @Bean
     public IObjectPersistencePort objectPersistencePort() {
@@ -85,6 +89,11 @@ public class BeanConfiguration {
     @Bean
     public IMensajeriaServicePort mensajeriaServicePort() {
         return new MensajeriaAdapter(mensajeriaFeignClient);
+    }
+
+    @Bean
+    public ITrazabilidadServicePort trazabilidadServicePort() {
+        return new TrazabilidadAdapter(trazabilidadFeignClient);
     }
 
     @Bean
@@ -114,6 +123,7 @@ public class BeanConfiguration {
 
     @Bean
     public IOrderServicePort orderServicePort() {
-        return new OrderUseCase(orderPersistencePort(), restaurantPersistencePort(), dishPersistencePort(), authenticatedUserPort, userValidationServicePort(), mensajeriaServicePort());
+        return new OrderUseCase(orderPersistencePort(), restaurantPersistencePort(), dishPersistencePort(),
+                authenticatedUserPort, userValidationServicePort(), mensajeriaServicePort(), trazabilidadServicePort());
     }
 }

@@ -33,7 +33,10 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
     @Override
     public void guardarPedido(OrderModel orderModel) {
         OrderEntity orderEntity = orderEntityMapper.toEntity(orderModel);
-        orderRepository.save(orderEntity);
+        OrderEntity guardado = orderRepository.save(orderEntity);
+        if (guardado != null && guardado.getId() != null) {
+            orderModel.setId(guardado.getId());
+        }
     }
 
     @Override
