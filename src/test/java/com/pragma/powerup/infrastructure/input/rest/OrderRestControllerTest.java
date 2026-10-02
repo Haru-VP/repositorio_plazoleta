@@ -1,5 +1,6 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
+import com.pragma.powerup.application.dto.request.AssignOrderRequestDto;
 import com.pragma.powerup.application.dto.request.OrderDishRequestDto;
 import com.pragma.powerup.application.dto.request.OrderRequestDto;
 import com.pragma.powerup.application.dto.response.OrderResponseDto;
@@ -76,5 +77,63 @@ class OrderRestControllerTest {
         assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
         verify(orderHandler, times(1)).listarPedidosPorEstado("PENDIENTE", 1L, 0, 10);
+    }
+
+    @Test
+    void asignarPedido_porPath_retornaOkConOrderResponseDto() {
+        // Arrange
+        Long idPedido = 1L;
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("EN_PREPARACION");
+        dto.setIdChef(50L);
+
+        when(orderHandler.asignarPedido(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.asignarPedido(idPedido);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("EN_PREPARACION", response.getBody().getEstado());
+        assertEquals(50L, response.getBody().getIdChef());
+        verify(orderHandler, times(1)).asignarPedido(idPedido);
+    }
+
+    @Test
+    void asignarPedidoConBody_retornaOkConOrderResponseDto() {
+        // Arrange
+        Long idPedido = 1L;
+        AssignOrderRequestDto bodyDto = new AssignOrderRequestDto(idPedido, null);
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("EN_PREPARACION");
+        dto.setIdChef(50L);
+
+        when(orderHandler.asignarPedido(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.asignarPedidoConBody(bodyDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("EN_PREPARACION", response.getBody().getEstado());
+        assertEquals(50L, response.getBody().getIdChef());
+        verify(orderHandler, times(1)).asignarPedido(idPedido);
+    }
+
+    @Test
+    void asignarPedidoConBody_bodyNulo_llamaHandlerConNull() {
+        // Arrange
+        when(orderHandler.asignarPedido(null)).thenReturn(new OrderResponseDto());
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.asignarPedidoConBody(null);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(orderHandler, times(1)).asignarPedido(null);
     }
 }

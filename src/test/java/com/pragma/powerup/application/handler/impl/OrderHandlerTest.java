@@ -76,4 +76,23 @@ class OrderHandlerTest {
         verify(orderServicePort, times(1)).listarPedidosPorEstado(estado, idRestaurante, 0, 10);
         verify(orderResponseMapper, times(1)).toResponseDtoList(Collections.singletonList(orderModel));
     }
+
+    @Test
+    void asignarPedido_exitoso() {
+        // Arrange
+        Long idPedido = 1L;
+        OrderModel orderModel = new OrderModel();
+        OrderResponseDto responseDto = new OrderResponseDto();
+
+        when(orderServicePort.asignarPedido(idPedido)).thenReturn(orderModel);
+        when(orderResponseMapper.toResponseDto(orderModel)).thenReturn(responseDto);
+
+        // Act
+        OrderResponseDto resultado = orderHandler.asignarPedido(idPedido);
+
+        // Assert
+        assertNotNull(resultado);
+        verify(orderServicePort, times(1)).asignarPedido(idPedido);
+        verify(orderResponseMapper, times(1)).toResponseDto(orderModel);
+    }
 }

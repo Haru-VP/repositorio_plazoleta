@@ -3,6 +3,8 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.exception.CantidadPlatoInvalidaException;
 import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
 import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
+import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -281,5 +283,133 @@ class OrderUseCaseTest {
                 orderUseCase.listarPedidosPorEstado("PENDIENTE", 999L, 0, 10)
         );
         verify(orderPersistencePort, never()).listarPedidosPorEstado(anyString(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void asignarPedido_exitoso_cambiaEstadoAEnPreparacionYAsignaChef() {
+        // Arrange
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        Long idRestaurante = 10L;
+
+        RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(idRestaurante);
+        when(orderPersistencePort.actualizarPedido(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        OrderModel resultado = orderUseCase.asignarPedido(idPedido);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(OrderStatus.EN_PREPARACION.name(), resultado.getEstado());
+        assertEquals(idChef, resultado.getIdChef());
+        verify(orderPersistencePort, times(1)).actualizarPedido(pedido);
+    }
+
+    @Test
+    void asignarPedido_idPedidoNulo_lanzaPedidoNoEncontradoException() {
+        // Act & Assert
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.asignarPedido(null)
+        );
+        verify(orderPersistencePort, never()).obtenerPedidoPorId(any());
+    }
+
+    @Test
+    void asignarPedido_usuarioNoAutenticado_lanzaUsuarioNoAutorizadoException() {
+        // Arrange
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.asignarPedido(1L)
+        );
+        verify(orderPersistencePort, never()).obtenerPedidoPorId(any());
+    }
+
+    @Test
+    void asignarPedido_pedidoNoExiste_lanzaPedidoNoEncontradoException() {
+        // Arrange
+        Long idPedido = 999L;
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(50L);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.asignarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void asignarPedido_empleadoDeOtroRestaurante_lanzaUsuarioNoAutorizadoException() {
+        // Arrange
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        Long idRestaurantePedido = 10L;
+        Long idRestauranteEmpleado = 20L;
+
+        RestaurantModel restaurante = new RestaurantModel(idRestaurantePedido, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(idRestauranteEmpleado);
+
+        // Act & Assert
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.asignarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void asignarPedido_pedidoNoEstaEnPendiente_lanzaPedidoNoEstaEnEstadoPendienteException() {
+        // Arrange
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        Long idRestaurante = 10L;
+
+        RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), 40L, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(idRestaurante);
+
+        // Act & Assert
+        assertThrows(PedidoNoEstaEnEstadoPendienteException.class, () ->
+                orderUseCase.asignarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void asignarPedido_empleadoSinRestauranteAsignado_asignaExitosamente() {
+        // Arrange
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        Long idRestaurante = 10L;
+
+        RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(null);
+        when(orderPersistencePort.actualizarPedido(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        OrderModel resultado = orderUseCase.asignarPedido(idPedido);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(OrderStatus.EN_PREPARACION.name(), resultado.getEstado());
+        assertEquals(idChef, resultado.getIdChef());
+        verify(orderPersistencePort, times(1)).actualizarPedido(pedido);
     }
 }

@@ -580,10 +580,158 @@
           }
         }
       }
+    },
+    "/api/v1/order/{id}/asignar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Asignarse a un pedido y cambiar su estado a EN_PREPARACION (Solo Empleados)",
+        "operationId": "asignarPedidoPut",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador del pedido a asignar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido asignado exitosamente y cambiado a EN_PREPARACION",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en estado PENDIENTE o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o el empleado no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado PENDIENTE"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Asignarse a un pedido y cambiar su estado a EN_PREPARACION mediante PATCH (Solo Empleados)",
+        "operationId": "asignarPedidoPatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador del pedido a asignar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido asignado exitosamente y cambiado a EN_PREPARACION",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en estado PENDIENTE o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o el empleado no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado PENDIENTE"
+          }
+        }
+      }
+    },
+    "/api/v1/order/asignar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Asignarse a un pedido mediante body y cambiar su estado a EN_PREPARACION (Solo Empleados)",
+        "operationId": "asignarPedidoBodyPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido asignado exitosamente y cambiado a EN_PREPARACION",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en estado PENDIENTE o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o el empleado no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado PENDIENTE"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AssignOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a asignar",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido a asignar",
+            "example": 1
+          }
+        },
+        "description": "DTO de solicitud para asignarse a un pedido como Chef"
+      },
       "UpdateDishRequestDto": {
         "required": [
           "descripcion",

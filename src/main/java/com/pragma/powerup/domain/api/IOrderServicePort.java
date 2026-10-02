@@ -9,4 +9,6 @@ public interface IOrderServicePort {
     void realizarPedido(OrderModel orderModel);
 
     List<OrderModel> listarPedidosPorEstado(String estado, Long idRestaurante, int page, int size);
+
+    OrderModel asignarPedido(Long idPedido);
 }

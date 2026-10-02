@@ -17,7 +17,9 @@ public enum ExceptionResponse {
     PEDIDO_SIN_PLATOS("El pedido debe contener al menos un plato"),
     CANTIDAD_PLATO_INVALIDA("La cantidad de cada plato debe ser un número entero mayor a cero"),
     PLATOS_DIFERENTE_RESTAURANTE("Todos los platos del pedido deben pertenecer al mismo restaurante"),
-    PLATO_INACTIVO("Uno o más platos seleccionados no se encuentran activos en el restaurante");
+    PLATO_INACTIVO("Uno o más platos seleccionados no se encuentran activos en el restaurante"),
+    PEDIDO_NO_ENCONTRADO("El pedido especificado no existe en el sistema"),
+    PEDIDO_NO_PENDIENTE("Solo se pueden asignar pedidos que se encuentren en estado PENDIENTE");
 
     private final String message;
 

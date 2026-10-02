@@ -33,4 +33,9 @@ public class OrderHandler implements IOrderHandler {
                 orderServicePort.listarPedidosPorEstado(estado, idRestaurante, page, size)
         );
     }
+
+    @Override
+    public OrderResponseDto asignarPedido(Long idPedido) {
+        return orderResponseMapper.toResponseDto(orderServicePort.asignarPedido(idPedido));
+    }
 }

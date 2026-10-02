@@ -11,4 +11,6 @@ public interface IOrderHandler {
     void realizarPedido(OrderRequestDto orderRequestDto);
 
     List<OrderResponseDto> listarPedidosPorEstado(String estado, Long idRestaurante, int page, int size);
+
+    OrderResponseDto asignarPedido(Long idPedido);
 }

@@ -59,4 +59,30 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
                 .map(RestaurantEmployeeEntity::getIdRestaurante)
                 .orElse(null);
     }
+
+    @Override
+    public OrderModel obtenerPedidoPorId(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return orderRepository.findById(id)
+                .map(orderEntityMapper::toModel)
+                .orElse(null);
+    }
+
+    @Override
+    public OrderModel actualizarPedido(OrderModel orderModel) {
+        if (orderModel == null || orderModel.getId() == null) {
+            return null;
+        }
+        OrderEntity orderEntity = orderRepository.findById(orderModel.getId()).orElse(null);
+        if (orderEntity != null) {
+            orderEntity.setEstado(orderModel.getEstado());
+            orderEntity.setIdChef(orderModel.getIdChef());
+            OrderEntity saved = orderRepository.save(orderEntity);
+            return orderEntityMapper.toModel(saved);
+        }
+        OrderEntity toSave = orderEntityMapper.toEntity(orderModel);
+        return orderEntityMapper.toModel(orderRepository.save(toSave));
+    }
 }

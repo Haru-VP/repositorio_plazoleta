@@ -13,4 +13,8 @@ public interface IOrderPersistencePort {
     List<OrderModel> listarPedidosPorEstado(String estado, Long idRestaurante, int page, int size);
 
     Long obtenerIdRestaurantePorEmpleado(Long idEmpleado);
+
+    OrderModel obtenerPedidoPorId(Long id);
+
+    OrderModel actualizarPedido(OrderModel orderModel);
 }

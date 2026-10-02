@@ -161,4 +161,115 @@ class OrderJpaAdapterTest {
         assertNull(resultado);
         verify(restaurantEmployeeRepository, times(1)).findByIdEmpleado(idEmpleado);
     }
+
+    @Test
+    void obtenerPedidoPorId_cuandoExiste_retornaOrderModel() {
+        // Arrange
+        Long id = 1L;
+        OrderEntity entity = new OrderEntity();
+        OrderModel model = new OrderModel();
+        when(orderRepository.findById(id)).thenReturn(Optional.of(entity));
+        when(orderEntityMapper.toModel(entity)).thenReturn(model);
+
+        // Act
+        OrderModel resultado = orderJpaAdapter.obtenerPedidoPorId(id);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(model, resultado);
+        verify(orderRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void obtenerPedidoPorId_cuandoNoExiste_retornaNull() {
+        // Arrange
+        Long id = 999L;
+        when(orderRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        OrderModel resultado = orderJpaAdapter.obtenerPedidoPorId(id);
+
+        // Assert
+        assertNull(resultado);
+        verify(orderRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void obtenerPedidoPorId_idNulo_retornaNull() {
+        // Act
+        OrderModel resultado = orderJpaAdapter.obtenerPedidoPorId(null);
+
+        // Assert
+        assertNull(resultado);
+    }
+
+    @Test
+    void actualizarPedido_existente_actualizaEstadoYChefYRetornaModel() {
+        // Arrange
+        OrderModel input = new OrderModel();
+        input.setId(1L);
+        input.setEstado("EN_PREPARACION");
+        input.setIdChef(50L);
+
+        OrderEntity existing = new OrderEntity();
+        existing.setId(1L);
+        existing.setEstado("PENDIENTE");
+
+        OrderEntity saved = new OrderEntity();
+        saved.setId(1L);
+        saved.setEstado("EN_PREPARACION");
+        saved.setIdChef(50L);
+
+        OrderModel output = new OrderModel();
+        output.setId(1L);
+        output.setEstado("EN_PREPARACION");
+        output.setIdChef(50L);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(orderRepository.save(existing)).thenReturn(saved);
+        when(orderEntityMapper.toModel(saved)).thenReturn(output);
+
+        // Act
+        OrderModel resultado = orderJpaAdapter.actualizarPedido(input);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals("EN_PREPARACION", resultado.getEstado());
+        assertEquals(50L, resultado.getIdChef());
+        verify(orderRepository, times(1)).findById(1L);
+        verify(orderRepository, times(1)).save(existing);
+    }
+
+    @Test
+    void actualizarPedido_noExistente_guardaNuevoYRetornaModel() {
+        // Arrange
+        OrderModel input = new OrderModel();
+        input.setId(1L);
+        input.setEstado("EN_PREPARACION");
+
+        OrderEntity toSave = new OrderEntity();
+        OrderEntity saved = new OrderEntity();
+        OrderModel output = new OrderModel();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.empty());
+        when(orderEntityMapper.toEntity(input)).thenReturn(toSave);
+        when(orderRepository.save(toSave)).thenReturn(saved);
+        when(orderEntityMapper.toModel(saved)).thenReturn(output);
+
+        // Act
+        OrderModel resultado = orderJpaAdapter.actualizarPedido(input);
+
+        // Assert
+        assertNotNull(resultado);
+        verify(orderRepository, times(1)).save(toSave);
+    }
+
+    @Test
+    void actualizarPedido_nulo_retornaNull() {
+        // Act
+        OrderModel resultado = orderJpaAdapter.actualizarPedido(null);
+
+        // Assert
+        assertNull(resultado);
+    }
 }

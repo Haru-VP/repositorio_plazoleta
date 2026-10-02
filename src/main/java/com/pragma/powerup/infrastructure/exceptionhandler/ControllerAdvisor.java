@@ -7,6 +7,8 @@ import com.pragma.powerup.domain.exception.NitInvalidoException;
 import com.pragma.powerup.domain.exception.NitYaExisteException;
 import com.pragma.powerup.domain.exception.NombreInvalidoException;
 import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
+import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -148,6 +150,20 @@ public class ControllerAdvisor {
             PlatoInactivoException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PLATO_INACTIVO.getMessage()));
+    }
+
+    @ExceptionHandler(PedidoNoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handlePedidoNoEncontradoException(
+            PedidoNoEncontradoException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_ENCONTRADO.getMessage()));
+    }
+
+    @ExceptionHandler(PedidoNoEstaEnEstadoPendienteException.class)
+    public ResponseEntity<Map<String, String>> handlePedidoNoEstaEnEstadoPendienteException(
+            PedidoNoEstaEnEstadoPendienteException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_PENDIENTE.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
