@@ -7,6 +7,7 @@ import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaListoException;
+import com.pragma.powerup.domain.exception.PedidoNoSePuedeCancelarException;
 import com.pragma.powerup.domain.exception.PinInvalidoException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
@@ -640,6 +641,137 @@ class OrderUseCaseTest {
 
         assertThrows(PinInvalidoException.class, () ->
                 orderUseCase.entregarPedido(idPedido, "999999")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_exitoso() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.actualizarPedido(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrderModel resultado = orderUseCase.cancelarPedido(idPedido);
+
+        assertNotNull(resultado);
+        assertEquals(OrderStatus.CANCELADO.name(), resultado.getEstado());
+        verify(orderPersistencePort, times(1)).actualizarPedido(pedido);
+    }
+
+    @Test
+    void cancelarPedido_falla_idPedidoNulo() {
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.cancelarPedido(null)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_usuarioNoAutenticado() {
+        Long idPedido = 1L;
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(null);
+
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_pedidoNoExiste() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(null);
+
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_clienteNoEsDuenioDelPedido() {
+        Long idPedido = 1L;
+        Long idClienteAutenticado = 100L;
+        Long idClienteDuenio = 200L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idClienteDuenio, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idClienteAutenticado);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_pedidoEnPreparacion() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), 50L, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+
+        assertThrows(PedidoNoSePuedeCancelarException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_pedidoListo() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.LISTO.name(), 50L, "123456", restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+
+        assertThrows(PedidoNoSePuedeCancelarException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_pedidoEntregado() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.ENTREGADO.name(), 50L, "123456", restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+
+        assertThrows(PedidoNoSePuedeCancelarException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void cancelarPedido_falla_pedidoYaCancelado() {
+        Long idPedido = 1L;
+        Long idCliente = 100L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.CANCELADO.name(), null, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idCliente);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+
+        assertThrows(PedidoNoSePuedeCancelarException.class, () ->
+                orderUseCase.cancelarPedido(idPedido)
         );
         verify(orderPersistencePort, never()).actualizarPedido(any());
     }

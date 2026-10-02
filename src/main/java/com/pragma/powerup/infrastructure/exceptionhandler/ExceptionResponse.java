@@ -22,7 +22,8 @@ public enum ExceptionResponse {
     PEDIDO_NO_PENDIENTE("Solo se pueden asignar pedidos que se encuentren en estado PENDIENTE"),
     PEDIDO_NO_EN_PREPARACION("Solo se pueden marcar como listos los pedidos que se encuentren en preparación"),
     PEDIDO_NO_ESTA_LISTO("Solo se pueden entregar pedidos que se encuentren en estado LISTO"),
-    PIN_INVALIDO("El PIN de seguridad proporcionado es incorrecto o inválido");
+    PIN_INVALIDO("El PIN de seguridad proporcionado es incorrecto o inválido"),
+    PEDIDO_NO_SE_PUEDE_CANCELAR("Lo sentimos, tu pedido ya está en preparación y no puede cancelarse");
 
     private final String message;
 

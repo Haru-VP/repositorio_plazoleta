@@ -8,6 +8,7 @@ import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaListoException;
+import com.pragma.powerup.domain.exception.PedidoNoSePuedeCancelarException;
 import com.pragma.powerup.domain.exception.PinInvalidoException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
@@ -235,6 +236,35 @@ public class OrderUseCase implements IOrderServicePort {
         }
 
         pedido.setEstado(OrderStatus.ENTREGADO.name());
+
+        return orderPersistencePort.actualizarPedido(pedido);
+    }
+
+    @Override
+    public OrderModel cancelarPedido(Long idPedido) {
+        if (idPedido == null) {
+            throw new PedidoNoEncontradoException();
+        }
+
+        Long idCliente = authenticatedUserPort.obtenerIdUsuarioAutenticado();
+        if (idCliente == null) {
+            throw new UsuarioNoAutorizadoException();
+        }
+
+        OrderModel pedido = orderPersistencePort.obtenerPedidoPorId(idPedido);
+        if (pedido == null) {
+            throw new PedidoNoEncontradoException();
+        }
+
+        if (!idCliente.equals(pedido.getIdCliente())) {
+            throw new UsuarioNoAutorizadoException();
+        }
+
+        if (!OrderStatus.PENDIENTE.name().equalsIgnoreCase(pedido.getEstado())) {
+            throw new PedidoNoSePuedeCancelarException();
+        }
+
+        pedido.setEstado(OrderStatus.CANCELADO.name());
 
         return orderPersistencePort.actualizarPedido(pedido);
     }

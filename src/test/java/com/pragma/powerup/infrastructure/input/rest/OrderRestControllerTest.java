@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.AssignOrderRequestDto;
+import com.pragma.powerup.application.dto.request.CancelOrderRequestDto;
 import com.pragma.powerup.application.dto.request.OrderDishRequestDto;
 import com.pragma.powerup.application.dto.request.OrderRequestDto;
 import com.pragma.powerup.application.dto.response.OrderResponseDto;
@@ -272,5 +273,81 @@ class OrderRestControllerTest {
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(orderHandler, times(1)).entregarPedido(null, null);
+    }
+
+    @Test
+    void cancelarPedido_porPath_retornaOkConOrderResponseDto() {
+        // Arrange
+        Long idPedido = 1L;
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("CANCELADO");
+
+        when(orderHandler.cancelarPedido(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.cancelarPedido(idPedido);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("CANCELADO", response.getBody().getEstado());
+        verify(orderHandler, times(1)).cancelarPedido(idPedido);
+    }
+
+    @Test
+    void cancelarPedidoConBody_retornaOkConOrderResponseDto() {
+        // Arrange
+        Long idPedido = 1L;
+        CancelOrderRequestDto bodyDto = new CancelOrderRequestDto(idPedido, null);
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("CANCELADO");
+
+        when(orderHandler.cancelarPedido(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.cancelarPedidoConBody(bodyDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("CANCELADO", response.getBody().getEstado());
+        verify(orderHandler, times(1)).cancelarPedido(idPedido);
+    }
+
+    @Test
+    void cancelarPedidoConBody_bodyNulo_llamaHandlerConNull() {
+        // Arrange
+        when(orderHandler.cancelarPedido(null)).thenReturn(new OrderResponseDto());
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.cancelarPedidoConBody(null);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(orderHandler, times(1)).cancelarPedido(null);
+    }
+
+    @Test
+    void cancelarPedidoConBody_idAlternativo_retornaOk() {
+        // Arrange
+        Long idPedido = 2L;
+        CancelOrderRequestDto bodyDto = new CancelOrderRequestDto();
+        bodyDto.setId(idPedido);
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("CANCELADO");
+
+        when(orderHandler.cancelarPedido(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.cancelarPedidoConBody(bodyDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("CANCELADO", response.getBody().getEstado());
+        verify(orderHandler, times(1)).cancelarPedido(idPedido);
     }
 }

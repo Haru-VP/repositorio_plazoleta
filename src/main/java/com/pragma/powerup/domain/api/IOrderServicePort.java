@@ -15,4 +15,6 @@ public interface IOrderServicePort {
     OrderModel notificarPedidoListo(Long idPedido);
 
     OrderModel entregarPedido(Long idPedido, String pin);
+
+    OrderModel cancelarPedido(Long idPedido);
 }

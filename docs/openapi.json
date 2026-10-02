@@ -1009,6 +1009,204 @@
           }
         }
       }
+    },
+    "/api/v1/order/{id}/cancelar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido en estado PENDIENTE (Solo Clientes)",
+        "description": "Permite al cliente propietario de la orden cancelar su pedido mientras siga en estado PENDIENTE.",
+        "operationId": "cancelarPedido",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del pedido a cancelar",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido en estado PENDIENTE por PATCH (Solo Clientes)",
+        "description": "Método HTTP PATCH alternativo para cancelar un pedido en estado PENDIENTE.",
+        "operationId": "cancelarPedidoPatch",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del pedido a cancelar",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      }
+    },
+    "/api/v1/order/cancelar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido mediante body en estado PENDIENTE (Solo Clientes)",
+        "description": "Permite al cliente cancelar un pedido enviando el id en el cuerpo JSON de la petición.",
+        "operationId": "cancelarPedidoConBody",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Cuerpo con el id del pedido a cancelar",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CancelOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido mediante body por PATCH (Solo Clientes)",
+        "description": "Método HTTP PATCH alternativo con body JSON para cancelar un pedido.",
+        "operationId": "cancelarPedidoConBodyPatch",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Cuerpo con el id del pedido a cancelar",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CancelOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1407,6 +1605,24 @@
           }
         },
         "description": "Datos de un pedido para visualización por el personal del restaurante"
+      },
+      "CancelOrderRequestDto": {
+        "type": "object",
+        "description": "DTO de solicitud para cancelar un pedido",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a cancelar",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido",
+            "example": 1
+          }
+        }
       }
     },
     "securitySchemes": {

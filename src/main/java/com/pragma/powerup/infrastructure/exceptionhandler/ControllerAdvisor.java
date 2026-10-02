@@ -11,6 +11,7 @@ import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaListoException;
+import com.pragma.powerup.domain.exception.PedidoNoSePuedeCancelarException;
 import com.pragma.powerup.domain.exception.PinInvalidoException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
@@ -188,6 +189,13 @@ public class ControllerAdvisor {
             PinInvalidoException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PIN_INVALIDO.getMessage()));
+    }
+
+    @ExceptionHandler(PedidoNoSePuedeCancelarException.class)
+    public ResponseEntity<Map<String, String>> handlePedidoNoSePuedeCancelarException(
+            PedidoNoSePuedeCancelarException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_SE_PUEDE_CANCELAR.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

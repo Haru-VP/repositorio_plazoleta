@@ -1,6 +1,7 @@
 package com.pragma.powerup.infrastructure.input.rest;
 
 import com.pragma.powerup.application.dto.request.AssignOrderRequestDto;
+import com.pragma.powerup.application.dto.request.CancelOrderRequestDto;
 import com.pragma.powerup.application.dto.request.OrderRequestDto;
 import com.pragma.powerup.application.dto.response.OrderResponseDto;
 import com.pragma.powerup.application.handler.IOrderHandler;
@@ -170,5 +171,35 @@ public class OrderRestController {
         Long id = deliverOrderRequestDto != null ? deliverOrderRequestDto.getIdPedidoEfectivo() : null;
         String pin = deliverOrderRequestDto != null ? deliverOrderRequestDto.getPin() : null;
         return ResponseEntity.ok(orderHandler.entregarPedido(id, pin));
+    }
+
+    @Operation(summary = "Cancelar un pedido en estado PENDIENTE (Solo Clientes)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/cancelar", "/cancelar/{id}"})
+    @PatchMapping(value = {"/{id}/cancelar", "/cancelar/{id}"})
+    public ResponseEntity<OrderResponseDto> cancelarPedido(@PathVariable Long id) {
+        return ResponseEntity.ok(orderHandler.cancelarPedido(id));
+    }
+
+    @Operation(summary = "Cancelar un pedido mediante body en estado PENDIENTE (Solo Clientes)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse", content = @Content)
+    })
+    @PutMapping("/cancelar")
+    @PatchMapping("/cancelar")
+    public ResponseEntity<OrderResponseDto> cancelarPedidoConBody(
+            @RequestBody(required = false) CancelOrderRequestDto cancelOrderRequestDto) {
+        Long id = cancelOrderRequestDto != null ? cancelOrderRequestDto.getIdPedidoEfectivo() : null;
+        return ResponseEntity.ok(orderHandler.cancelarPedido(id));
     }
 }

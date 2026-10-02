@@ -134,4 +134,23 @@ class OrderHandlerTest {
         verify(orderServicePort, times(1)).entregarPedido(idPedido, pin);
         verify(orderResponseMapper, times(1)).toResponseDto(orderModel);
     }
+
+    @Test
+    void cancelarPedido_exitoso() {
+        // Arrange
+        Long idPedido = 1L;
+        OrderModel orderModel = new OrderModel();
+        OrderResponseDto responseDto = new OrderResponseDto();
+
+        when(orderServicePort.cancelarPedido(idPedido)).thenReturn(orderModel);
+        when(orderResponseMapper.toResponseDto(orderModel)).thenReturn(responseDto);
+
+        // Act
+        OrderResponseDto resultado = orderHandler.cancelarPedido(idPedido);
+
+        // Assert
+        assertNotNull(resultado);
+        verify(orderServicePort, times(1)).cancelarPedido(idPedido);
+        verify(orderResponseMapper, times(1)).toResponseDto(orderModel);
+    }
 }
