@@ -7,6 +7,7 @@ import com.pragma.powerup.domain.api.IRestaurantServicePort;
 import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.ICategoryPersistencePort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
+import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
 import com.pragma.powerup.domain.spi.IObjectPersistencePort;
 import com.pragma.powerup.domain.spi.IOrderPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
@@ -15,7 +16,9 @@ import com.pragma.powerup.domain.usecase.DishUseCase;
 import com.pragma.powerup.domain.usecase.ObjectUseCase;
 import com.pragma.powerup.domain.usecase.OrderUseCase;
 import com.pragma.powerup.domain.usecase.RestaurantUseCase;
+import com.pragma.powerup.infrastructure.out.feign.adapter.MensajeriaAdapter;
 import com.pragma.powerup.infrastructure.out.feign.adapter.UserValidationAdapter;
+import com.pragma.powerup.infrastructure.out.feign.client.IMensajeriaFeignClient;
 import com.pragma.powerup.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.DishJpaAdapter;
@@ -57,6 +60,7 @@ public class BeanConfiguration {
     private final IOrderRepository orderRepository;
     private final IOrderEntityMapper orderEntityMapper;
     private final IRestaurantEmployeeRepository restaurantEmployeeRepository;
+    private final IMensajeriaFeignClient mensajeriaFeignClient;
 
     @Bean
     public IObjectPersistencePort objectPersistencePort() {
@@ -76,6 +80,11 @@ public class BeanConfiguration {
     @Bean
     public IUserValidationServicePort userValidationServicePort() {
         return new UserValidationAdapter(userFeignClient);
+    }
+
+    @Bean
+    public IMensajeriaServicePort mensajeriaServicePort() {
+        return new MensajeriaAdapter(mensajeriaFeignClient);
     }
 
     @Bean
@@ -105,6 +114,6 @@ public class BeanConfiguration {
 
     @Bean
     public IOrderServicePort orderServicePort() {
-        return new OrderUseCase(orderPersistencePort(), restaurantPersistencePort(), dishPersistencePort(), authenticatedUserPort);
+        return new OrderUseCase(orderPersistencePort(), restaurantPersistencePort(), dishPersistencePort(), authenticatedUserPort, userValidationServicePort(), mensajeriaServicePort());
     }
 }

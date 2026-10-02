@@ -5,6 +5,7 @@ import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
 import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -19,8 +20,10 @@ import com.pragma.powerup.domain.model.OrderStatus;
 import com.pragma.powerup.domain.model.RestaurantModel;
 import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
+import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
 import com.pragma.powerup.domain.spi.IOrderPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
+import com.pragma.powerup.domain.spi.IUserValidationServicePort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -60,6 +64,12 @@ class OrderUseCaseTest {
     @Mock
     private IAuthenticatedUserPort authenticatedUserPort;
 
+    @Mock
+    private IUserValidationServicePort userValidationServicePort;
+
+    @Mock
+    private IMensajeriaServicePort mensajeriaServicePort;
+
     @InjectMocks
     private OrderUseCase orderUseCase;
 
@@ -77,7 +87,7 @@ class OrderUseCaseTest {
         List<OrderDishModel> items = new ArrayList<>();
         items.add(item);
 
-        ordenValida = new OrderModel(null, null, null, null, null, restauranteValido, items);
+        ordenValida = new OrderModel(null, null, null, null, null, null, restauranteValido, items);
     }
 
     @Test
@@ -293,7 +303,7 @@ class OrderUseCaseTest {
         Long idRestaurante = 10L;
 
         RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
-        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, restaurante, new ArrayList<>());
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
 
         when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
         when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
@@ -354,7 +364,7 @@ class OrderUseCaseTest {
         Long idRestauranteEmpleado = 20L;
 
         RestaurantModel restaurante = new RestaurantModel(idRestaurantePedido, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
-        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, restaurante, new ArrayList<>());
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
 
         when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
         when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
@@ -375,7 +385,7 @@ class OrderUseCaseTest {
         Long idRestaurante = 10L;
 
         RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
-        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), 40L, restaurante, new ArrayList<>());
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), 40L, null, restaurante, new ArrayList<>());
 
         when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
         when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
@@ -396,7 +406,7 @@ class OrderUseCaseTest {
         Long idRestaurante = 10L;
 
         RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
-        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, restaurante, new ArrayList<>());
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
 
         when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
         when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
@@ -411,5 +421,99 @@ class OrderUseCaseTest {
         assertEquals(OrderStatus.EN_PREPARACION.name(), resultado.getEstado());
         assertEquals(idChef, resultado.getIdChef());
         verify(orderPersistencePort, times(1)).actualizarPedido(pedido);
+    }
+
+    @Test
+    void notificarPedidoListo_exitoso_generaPinYEnviaSms() {
+        // Arrange
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        Long idCliente = 100L;
+        Long idRestaurante = 10L;
+
+        RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, idCliente, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), idChef, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(idRestaurante);
+        when(orderPersistencePort.actualizarPedido(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userValidationServicePort.obtenerCelularUsuario(idCliente)).thenReturn("+573001234567");
+        when(mensajeriaServicePort.notificarPedidoListo(anyString(), anyString(), any())).thenReturn(true);
+
+        // Act
+        OrderModel resultado = orderUseCase.notificarPedidoListo(idPedido);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(OrderStatus.LISTO.name(), resultado.getEstado());
+        assertNotNull(resultado.getPin());
+        assertEquals(6, resultado.getPin().length());
+        verify(orderPersistencePort, times(1)).actualizarPedido(pedido);
+        verify(userValidationServicePort, times(1)).obtenerCelularUsuario(idCliente);
+        verify(mensajeriaServicePort, times(1)).notificarPedidoListo(eq("+573001234567"), eq(resultado.getPin()), eq(idPedido));
+    }
+
+    @Test
+    void notificarPedidoListo_idPedidoNulo_lanzaPedidoNoEncontradoException() {
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.notificarPedidoListo(null)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void notificarPedidoListo_usuarioNoAutenticado_lanzaUsuarioNoAutorizadoException() {
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(null);
+
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.notificarPedidoListo(1L)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void notificarPedidoListo_pedidoNoExiste_lanzaPedidoNoEncontradoException() {
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(50L);
+        when(orderPersistencePort.obtenerPedidoPorId(1L)).thenReturn(null);
+
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.notificarPedidoListo(1L)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void notificarPedidoListo_empleadoDeOtroRestaurante_lanzaUsuarioNoAutorizadoException() {
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), idChef, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(99L);
+
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.notificarPedidoListo(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void notificarPedidoListo_pedidoNoEstaEnPreparacion_lanzaPedidoNoEstaEnPreparacionException() {
+        Long idPedido = 1L;
+        Long idChef = 50L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.PENDIENTE.name(), null, null, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idChef);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idChef)).thenReturn(10L);
+
+        assertThrows(PedidoNoEstaEnPreparacionException.class, () ->
+                orderUseCase.notificarPedidoListo(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
     }
 }

@@ -710,6 +710,136 @@
           }
         }
       }
+    },
+    "/api/v1/order/{id}/listo": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Marcar pedido como LISTO y enviar notificación SMS con PIN de seguridad (Solo Empleados)",
+        "operationId": "notificarPedidoListoPut",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del pedido a marcar como listo",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido marcado como LISTO exitosamente y SMS despachado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en preparación o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado EN_PREPARACION"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Marcar pedido como LISTO y enviar notificación SMS con PIN de seguridad (Solo Empleados - Patch)",
+        "operationId": "notificarPedidoListoPatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del pedido a marcar como listo",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido marcado como LISTO exitosamente y SMS despachado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en preparación o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado EN_PREPARACION"
+          }
+        }
+      }
+    },
+    "/api/v1/order/listo": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Marcar pedido como LISTO mediante body y enviar notificación SMS con PIN de seguridad (Solo Empleados)",
+        "operationId": "notificarPedidoListoBodyPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadyOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido marcado como LISTO exitosamente y SMS despachado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en preparación o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado EN_PREPARACION"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -731,6 +861,24 @@
           }
         },
         "description": "DTO de solicitud para asignarse a un pedido como Chef"
+      },
+      "ReadyOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a marcar como listo",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido",
+            "example": 1
+          }
+        },
+        "description": "DTO de solicitud para notificar pedido listo"
       },
       "UpdateDishRequestDto": {
         "required": [
@@ -1042,6 +1190,11 @@
             "format": "int64",
             "description": "Identificador del chef asignado (null si no ha sido asignado)",
             "example": null
+          },
+          "pin": {
+            "type": "string",
+            "description": "PIN de seguridad asignado para la entrega del pedido",
+            "example": "123456"
           },
           "idRestaurante": {
             "type": "integer",

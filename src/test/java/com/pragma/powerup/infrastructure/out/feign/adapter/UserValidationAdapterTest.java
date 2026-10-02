@@ -98,4 +98,26 @@ class UserValidationAdapterTest {
         assertFalse(resultado);
         verify(userFeignClient).obtenerUsuarioPorId(3L);
     }
+
+    @Test
+    void obtenerCelularUsuario_usuarioExiste_retornaCelular() {
+        usuarioCliente.setCelular("+573001234567");
+        when(userFeignClient.obtenerUsuarioPorId(2L)).thenReturn(usuarioCliente);
+
+        String celular = userValidationAdapter.obtenerCelularUsuario(2L);
+
+        org.junit.jupiter.api.Assertions.assertEquals("+573001234567", celular);
+        verify(userFeignClient).obtenerUsuarioPorId(2L);
+    }
+
+    @Test
+    void obtenerCelularUsuario_errorFeign_retornaNull() {
+        Request request = Request.create(Request.HttpMethod.GET, "/api/v1/user/99", Collections.emptyMap(), null, StandardCharsets.UTF_8, new RequestTemplate());
+        when(userFeignClient.obtenerUsuarioPorId(99L)).thenThrow(new FeignException.NotFound("Not found", request, null, null));
+
+        String celular = userValidationAdapter.obtenerCelularUsuario(99L);
+
+        org.junit.jupiter.api.Assertions.assertNull(celular);
+        verify(userFeignClient).obtenerUsuarioPorId(99L);
+    }
 }

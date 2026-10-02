@@ -23,4 +23,14 @@ public class UserValidationAdapter implements IUserValidationServicePort {
             return false;
         }
     }
+
+    @Override
+    public String obtenerCelularUsuario(Long idUsuario) {
+        try {
+            UserResponseDto userResponseDto = userFeignClient.obtenerUsuarioPorId(idUsuario);
+            return userResponseDto != null ? userResponseDto.getCelular() : null;
+        } catch (FeignException e) {
+            return null;
+        }
+    }
 }

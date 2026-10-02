@@ -6,6 +6,7 @@ import com.pragma.powerup.domain.exception.ClienteTienePedidoActivoException;
 import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -18,9 +19,12 @@ import com.pragma.powerup.domain.model.OrderModel;
 import com.pragma.powerup.domain.model.OrderStatus;
 import com.pragma.powerup.domain.spi.IAuthenticatedUserPort;
 import com.pragma.powerup.domain.spi.IDishPersistencePort;
+import com.pragma.powerup.domain.spi.IMensajeriaServicePort;
 import com.pragma.powerup.domain.spi.IOrderPersistencePort;
 import com.pragma.powerup.domain.spi.IRestaurantPersistencePort;
+import com.pragma.powerup.domain.spi.IUserValidationServicePort;
 
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,15 +34,22 @@ public class OrderUseCase implements IOrderServicePort {
     private final IRestaurantPersistencePort restaurantPersistencePort;
     private final IDishPersistencePort dishPersistencePort;
     private final IAuthenticatedUserPort authenticatedUserPort;
+    private final IUserValidationServicePort userValidationServicePort;
+    private final IMensajeriaServicePort mensajeriaServicePort;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public OrderUseCase(IOrderPersistencePort orderPersistencePort,
                         IRestaurantPersistencePort restaurantPersistencePort,
                         IDishPersistencePort dishPersistencePort,
-                        IAuthenticatedUserPort authenticatedUserPort) {
+                        IAuthenticatedUserPort authenticatedUserPort,
+                        IUserValidationServicePort userValidationServicePort,
+                        IMensajeriaServicePort mensajeriaServicePort) {
         this.orderPersistencePort = orderPersistencePort;
         this.restaurantPersistencePort = restaurantPersistencePort;
         this.dishPersistencePort = dishPersistencePort;
         this.authenticatedUserPort = authenticatedUserPort;
+        this.userValidationServicePort = userValidationServicePort;
+        this.mensajeriaServicePort = mensajeriaServicePort;
     }
 
     @Override
@@ -151,5 +162,43 @@ public class OrderUseCase implements IOrderServicePort {
         pedido.setIdChef(idEmpleado);
 
         return orderPersistencePort.actualizarPedido(pedido);
+    }
+
+    @Override
+    public OrderModel notificarPedidoListo(Long idPedido) {
+        if (idPedido == null) {
+            throw new PedidoNoEncontradoException();
+        }
+
+        Long idEmpleado = authenticatedUserPort.obtenerIdUsuarioAutenticado();
+        if (idEmpleado == null) {
+            throw new UsuarioNoAutorizadoException();
+        }
+
+        OrderModel pedido = orderPersistencePort.obtenerPedidoPorId(idPedido);
+        if (pedido == null) {
+            throw new PedidoNoEncontradoException();
+        }
+
+        Long idRestauranteEmpleado = orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado);
+        if (idRestauranteEmpleado != null && pedido.getRestaurante() != null
+                && !idRestauranteEmpleado.equals(pedido.getRestaurante().getId())) {
+            throw new UsuarioNoAutorizadoException();
+        }
+
+        if (!OrderStatus.EN_PREPARACION.name().equalsIgnoreCase(pedido.getEstado())) {
+            throw new PedidoNoEstaEnPreparacionException();
+        }
+
+        String pin = String.format("%06d", secureRandom.nextInt(1_000_000));
+        pedido.setPin(pin);
+        pedido.setEstado(OrderStatus.LISTO.name());
+
+        OrderModel pedidoActualizado = orderPersistencePort.actualizarPedido(pedido);
+
+        String celular = userValidationServicePort.obtenerCelularUsuario(pedido.getIdCliente());
+        mensajeriaServicePort.notificarPedidoListo(celular, pin, pedido.getId());
+
+        return pedidoActualizado;
     }
 }

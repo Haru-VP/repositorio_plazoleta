@@ -18,6 +18,7 @@ public class OrderModel {
     private LocalDate fecha;
     private String estado;
     private Long idChef;
+    private String pin;
     private RestaurantModel restaurante;
     private List<OrderDishModel> pedidosPlatos;
 }

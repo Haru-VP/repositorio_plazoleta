@@ -13,4 +13,6 @@ public interface IOrderHandler {
     List<OrderResponseDto> listarPedidosPorEstado(String estado, Long idRestaurante, int page, int size);
 
     OrderResponseDto asignarPedido(Long idPedido);
+
+    OrderResponseDto notificarPedidoListo(Long idPedido);
 }

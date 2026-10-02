@@ -42,6 +42,9 @@ public class OrderEntity {
     @Column(name = "id_chef")
     private Long idChef;
 
+    @Column(name = "pin", length = 10)
+    private String pin;
+
     @ManyToOne
     @JoinColumn(name = "id_restaurante", nullable = false)
     private RestaurantEntity restaurante;

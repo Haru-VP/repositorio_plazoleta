@@ -136,4 +136,63 @@ class OrderRestControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(orderHandler, times(1)).asignarPedido(null);
     }
+
+    @Test
+    void notificarPedidoListo_porPath_retornaOkConOrderResponseDto() {
+        // Arrange
+        Long idPedido = 1L;
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("LISTO");
+        dto.setPin("123456");
+
+        when(orderHandler.notificarPedidoListo(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.notificarPedidoListo(idPedido);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("LISTO", response.getBody().getEstado());
+        assertEquals("123456", response.getBody().getPin());
+        verify(orderHandler, times(1)).notificarPedidoListo(idPedido);
+    }
+
+    @Test
+    void notificarPedidoListoConBody_retornaOkConOrderResponseDto() {
+        // Arrange
+        Long idPedido = 1L;
+        com.pragma.powerup.application.dto.request.ReadyOrderRequestDto bodyDto =
+                new com.pragma.powerup.application.dto.request.ReadyOrderRequestDto(idPedido, null);
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("LISTO");
+        dto.setPin("654321");
+
+        when(orderHandler.notificarPedidoListo(idPedido)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.notificarPedidoListoConBody(bodyDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("LISTO", response.getBody().getEstado());
+        assertEquals("654321", response.getBody().getPin());
+        verify(orderHandler, times(1)).notificarPedidoListo(idPedido);
+    }
+
+    @Test
+    void notificarPedidoListoConBody_bodyNulo_llamaHandlerConNull() {
+        // Arrange
+        when(orderHandler.notificarPedidoListo(null)).thenReturn(new OrderResponseDto());
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.notificarPedidoListoConBody(null);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(orderHandler, times(1)).notificarPedidoListo(null);
+    }
 }

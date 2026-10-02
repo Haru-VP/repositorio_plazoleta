@@ -38,4 +38,9 @@ public class OrderHandler implements IOrderHandler {
     public OrderResponseDto asignarPedido(Long idPedido) {
         return orderResponseMapper.toResponseDto(orderServicePort.asignarPedido(idPedido));
     }
+
+    @Override
+    public OrderResponseDto notificarPedidoListo(Long idPedido) {
+        return orderResponseMapper.toResponseDto(orderServicePort.notificarPedidoListo(idPedido));
+    }
 }

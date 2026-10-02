@@ -9,6 +9,7 @@ import com.pragma.powerup.domain.exception.NombreInvalidoException;
 import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosException;
 import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -164,6 +165,13 @@ public class ControllerAdvisor {
             PedidoNoEstaEnEstadoPendienteException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_PENDIENTE.getMessage()));
+    }
+
+    @ExceptionHandler(PedidoNoEstaEnPreparacionException.class)
+    public ResponseEntity<Map<String, String>> handlePedidoNoEstaEnPreparacionException(
+            PedidoNoEstaEnPreparacionException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_EN_PREPARACION.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

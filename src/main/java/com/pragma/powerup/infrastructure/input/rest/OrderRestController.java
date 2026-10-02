@@ -107,4 +107,33 @@ public class OrderRestController {
         Long id = assignOrderRequestDto != null ? assignOrderRequestDto.getIdPedidoEfectivo() : null;
         return ResponseEntity.ok(orderHandler.asignarPedido(id));
     }
+
+    @Operation(summary = "Marcar pedido como LISTO y enviar notificación SMS con PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO exitosamente y SMS despachado"),
+            @ApiResponse(responseCode = "400", description = "El pedido no se encuentra en preparación o datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado EN_PREPARACION", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/listo", "/listo/{id}"})
+    @PatchMapping(value = {"/{id}/listo", "/listo/{id}"})
+    public ResponseEntity<OrderResponseDto> notificarPedidoListo(@PathVariable Long id) {
+        return ResponseEntity.ok(orderHandler.notificarPedidoListo(id));
+    }
+
+    @Operation(summary = "Marcar pedido como LISTO mediante body y enviar notificación SMS con PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO exitosamente y SMS despachado"),
+            @ApiResponse(responseCode = "400", description = "El pedido no se encuentra en preparación o datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado EN_PREPARACION", content = @Content)
+    })
+    @PutMapping("/listo")
+    @PatchMapping("/listo")
+    public ResponseEntity<OrderResponseDto> notificarPedidoListoConBody(@RequestBody(required = false) com.pragma.powerup.application.dto.request.ReadyOrderRequestDto readyOrderRequestDto) {
+        Long id = readyOrderRequestDto != null ? readyOrderRequestDto.getIdPedidoEfectivo() : null;
+        return ResponseEntity.ok(orderHandler.notificarPedidoListo(id));
+    }
 }

@@ -31,6 +31,9 @@ public class OrderResponseDto {
     @Schema(description = "Identificador del chef asignado (null si no ha sido asignado)", example = "null")
     private Long idChef;
 
+    @Schema(description = "PIN de seguridad asignado para la entrega del pedido", example = "123456")
+    private String pin;
+
     @Schema(description = "Identificador del restaurante al que pertenece el pedido", example = "1")
     private Long idRestaurante;
 
