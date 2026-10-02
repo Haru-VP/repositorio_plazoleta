@@ -43,4 +43,9 @@ public class OrderHandler implements IOrderHandler {
     public OrderResponseDto notificarPedidoListo(Long idPedido) {
         return orderResponseMapper.toResponseDto(orderServicePort.notificarPedidoListo(idPedido));
     }
+
+    @Override
+    public OrderResponseDto entregarPedido(Long idPedido, String pin) {
+        return orderResponseMapper.toResponseDto(orderServicePort.entregarPedido(idPedido, pin));
+    }
 }

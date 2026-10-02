@@ -10,6 +10,8 @@ import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosExceptio
 import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaListoException;
+import com.pragma.powerup.domain.exception.PinInvalidoException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -172,6 +174,20 @@ public class ControllerAdvisor {
             PedidoNoEstaEnPreparacionException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_EN_PREPARACION.getMessage()));
+    }
+
+    @ExceptionHandler(PedidoNoEstaListoException.class)
+    public ResponseEntity<Map<String, String>> handlePedidoNoEstaListoException(
+            PedidoNoEstaListoException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PEDIDO_NO_ESTA_LISTO.getMessage()));
+    }
+
+    @ExceptionHandler(PinInvalidoException.class)
+    public ResponseEntity<Map<String, String>> handlePinInvalidoException(
+            PinInvalidoException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.PIN_INVALIDO.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

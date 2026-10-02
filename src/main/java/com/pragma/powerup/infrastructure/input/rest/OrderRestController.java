@@ -136,4 +136,39 @@ public class OrderRestController {
         Long id = readyOrderRequestDto != null ? readyOrderRequestDto.getIdPedidoEfectivo() : null;
         return ResponseEntity.ok(orderHandler.notificarPedidoListo(id));
     }
+
+    @Operation(summary = "Entregar pedido verificando PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente y cambiado a estado ENTREGADO"),
+            @ApiResponse(responseCode = "400", description = "El PIN es incorrecto o inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado LISTO", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/entregar", "/entregar/{id}"})
+    @PatchMapping(value = {"/{id}/entregar", "/entregar/{id}"})
+    public ResponseEntity<OrderResponseDto> entregarPedido(
+            @PathVariable Long id,
+            @RequestParam(required = false) String pin,
+            @RequestBody(required = false) com.pragma.powerup.application.dto.request.DeliverOrderRequestDto deliverOrderRequestDto) {
+        String pinEfectivo = pin != null ? pin : (deliverOrderRequestDto != null ? deliverOrderRequestDto.getPin() : null);
+        return ResponseEntity.ok(orderHandler.entregarPedido(id, pinEfectivo));
+    }
+
+    @Operation(summary = "Entregar pedido mediante body verificando PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente y cambiado a estado ENTREGADO"),
+            @ApiResponse(responseCode = "400", description = "El PIN es incorrecto o inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado LISTO", content = @Content)
+    })
+    @PutMapping("/entregar")
+    @PatchMapping("/entregar")
+    public ResponseEntity<OrderResponseDto> entregarPedidoConBody(
+            @RequestBody(required = false) com.pragma.powerup.application.dto.request.DeliverOrderRequestDto deliverOrderRequestDto) {
+        Long id = deliverOrderRequestDto != null ? deliverOrderRequestDto.getIdPedidoEfectivo() : null;
+        String pin = deliverOrderRequestDto != null ? deliverOrderRequestDto.getPin() : null;
+        return ResponseEntity.ok(orderHandler.entregarPedido(id, pin));
+    }
 }

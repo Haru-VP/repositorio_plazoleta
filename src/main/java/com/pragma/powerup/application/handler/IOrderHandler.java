@@ -15,4 +15,6 @@ public interface IOrderHandler {
     OrderResponseDto asignarPedido(Long idPedido);
 
     OrderResponseDto notificarPedidoListo(Long idPedido);
+
+    OrderResponseDto entregarPedido(Long idPedido, String pin);
 }

@@ -6,6 +6,8 @@ import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosExceptio
 import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaListoException;
+import com.pragma.powerup.domain.exception.PinInvalidoException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -513,6 +515,131 @@ class OrderUseCaseTest {
 
         assertThrows(PedidoNoEstaEnPreparacionException.class, () ->
                 orderUseCase.notificarPedidoListo(idPedido)
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_exitoso_cambiaEstadoAEntregado() {
+        // Arrange
+        Long idPedido = 1L;
+        Long idEmpleado = 50L;
+        Long idRestaurante = 10L;
+        String pinCorrecto = "123456";
+
+        RestaurantModel restaurante = new RestaurantModel(idRestaurante, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.LISTO.name(), idEmpleado, pinCorrecto, restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idEmpleado);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado)).thenReturn(idRestaurante);
+        when(orderPersistencePort.actualizarPedido(any(OrderModel.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        OrderModel resultado = orderUseCase.entregarPedido(idPedido, pinCorrecto);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(OrderStatus.ENTREGADO.name(), resultado.getEstado());
+        verify(orderPersistencePort, times(1)).actualizarPedido(pedido);
+    }
+
+    @Test
+    void entregarPedido_falla_idPedidoNulo() {
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.entregarPedido(null, "123456")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_falla_usuarioNoAutenticado() {
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(null);
+
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.entregarPedido(1L, "123456")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_falla_pedidoNoExiste() {
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(50L);
+        when(orderPersistencePort.obtenerPedidoPorId(1L)).thenReturn(null);
+
+        assertThrows(PedidoNoEncontradoException.class, () ->
+                orderUseCase.entregarPedido(1L, "123456")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_falla_empleadoDeOtroRestaurante() {
+        Long idPedido = 1L;
+        Long idEmpleado = 50L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.LISTO.name(), idEmpleado, "123456", restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idEmpleado);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado)).thenReturn(99L);
+
+        assertThrows(UsuarioNoAutorizadoException.class, () ->
+                orderUseCase.entregarPedido(idPedido, "123456")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_falla_pedidoNoEstaEnListo() {
+        Long idPedido = 1L;
+        Long idEmpleado = 50L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.EN_PREPARACION.name(), idEmpleado, "123456", restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idEmpleado);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado)).thenReturn(10L);
+
+        assertThrows(PedidoNoEstaListoException.class, () ->
+                orderUseCase.entregarPedido(idPedido, "123456")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_falla_pinNuloOVacio() {
+        Long idPedido = 1L;
+        Long idEmpleado = 50L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.LISTO.name(), idEmpleado, "123456", restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idEmpleado);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado)).thenReturn(10L);
+
+        assertThrows(PinInvalidoException.class, () ->
+                orderUseCase.entregarPedido(idPedido, null)
+        );
+        assertThrows(PinInvalidoException.class, () ->
+                orderUseCase.entregarPedido(idPedido, "   ")
+        );
+        verify(orderPersistencePort, never()).actualizarPedido(any());
+    }
+
+    @Test
+    void entregarPedido_falla_pinIncorrecto() {
+        Long idPedido = 1L;
+        Long idEmpleado = 50L;
+        RestaurantModel restaurante = new RestaurantModel(10L, "Restaurante", "123456", "Direccion", "+573001234567", "url", 100L);
+        OrderModel pedido = new OrderModel(idPedido, 100L, LocalDate.now(), OrderStatus.LISTO.name(), idEmpleado, "123456", restaurante, new ArrayList<>());
+
+        when(authenticatedUserPort.obtenerIdUsuarioAutenticado()).thenReturn(idEmpleado);
+        when(orderPersistencePort.obtenerPedidoPorId(idPedido)).thenReturn(pedido);
+        when(orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado)).thenReturn(10L);
+
+        assertThrows(PinInvalidoException.class, () ->
+                orderUseCase.entregarPedido(idPedido, "999999")
         );
         verify(orderPersistencePort, never()).actualizarPedido(any());
     }

@@ -114,4 +114,24 @@ class OrderHandlerTest {
         verify(orderServicePort, times(1)).notificarPedidoListo(idPedido);
         verify(orderResponseMapper, times(1)).toResponseDto(orderModel);
     }
+
+    @Test
+    void entregarPedido_exitoso() {
+        // Arrange
+        Long idPedido = 1L;
+        String pin = "123456";
+        OrderModel orderModel = new OrderModel();
+        OrderResponseDto responseDto = new OrderResponseDto();
+
+        when(orderServicePort.entregarPedido(idPedido, pin)).thenReturn(orderModel);
+        when(orderResponseMapper.toResponseDto(orderModel)).thenReturn(responseDto);
+
+        // Act
+        OrderResponseDto resultado = orderHandler.entregarPedido(idPedido, pin);
+
+        // Assert
+        assertNotNull(resultado);
+        verify(orderServicePort, times(1)).entregarPedido(idPedido, pin);
+        verify(orderResponseMapper, times(1)).toResponseDto(orderModel);
+    }
 }

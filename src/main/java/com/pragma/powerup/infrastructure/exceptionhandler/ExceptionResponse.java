@@ -20,7 +20,9 @@ public enum ExceptionResponse {
     PLATO_INACTIVO("Uno o más platos seleccionados no se encuentran activos en el restaurante"),
     PEDIDO_NO_ENCONTRADO("El pedido especificado no existe en el sistema"),
     PEDIDO_NO_PENDIENTE("Solo se pueden asignar pedidos que se encuentren en estado PENDIENTE"),
-    PEDIDO_NO_EN_PREPARACION("Solo se pueden marcar como listos los pedidos que se encuentren en preparación");
+    PEDIDO_NO_EN_PREPARACION("Solo se pueden marcar como listos los pedidos que se encuentren en preparación"),
+    PEDIDO_NO_ESTA_LISTO("Solo se pueden entregar pedidos que se encuentren en estado LISTO"),
+    PIN_INVALIDO("El PIN de seguridad proporcionado es incorrecto o inválido");
 
     private final String message;
 

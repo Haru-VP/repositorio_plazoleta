@@ -7,6 +7,8 @@ import com.pragma.powerup.domain.exception.ParametrosPaginacionInvalidosExceptio
 import com.pragma.powerup.domain.exception.PedidoNoEncontradoException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnEstadoPendienteException;
 import com.pragma.powerup.domain.exception.PedidoNoEstaEnPreparacionException;
+import com.pragma.powerup.domain.exception.PedidoNoEstaListoException;
+import com.pragma.powerup.domain.exception.PinInvalidoException;
 import com.pragma.powerup.domain.exception.PedidoSinPlatosException;
 import com.pragma.powerup.domain.exception.PlatoInactivoException;
 import com.pragma.powerup.domain.exception.PlatoNoEncontradoException;
@@ -200,5 +202,40 @@ public class OrderUseCase implements IOrderServicePort {
         mensajeriaServicePort.notificarPedidoListo(celular, pin, pedido.getId());
 
         return pedidoActualizado;
+    }
+
+    @Override
+    public OrderModel entregarPedido(Long idPedido, String pin) {
+        if (idPedido == null) {
+            throw new PedidoNoEncontradoException();
+        }
+
+        Long idEmpleado = authenticatedUserPort.obtenerIdUsuarioAutenticado();
+        if (idEmpleado == null) {
+            throw new UsuarioNoAutorizadoException();
+        }
+
+        OrderModel pedido = orderPersistencePort.obtenerPedidoPorId(idPedido);
+        if (pedido == null) {
+            throw new PedidoNoEncontradoException();
+        }
+
+        Long idRestauranteEmpleado = orderPersistencePort.obtenerIdRestaurantePorEmpleado(idEmpleado);
+        if (idRestauranteEmpleado != null && pedido.getRestaurante() != null
+                && !idRestauranteEmpleado.equals(pedido.getRestaurante().getId())) {
+            throw new UsuarioNoAutorizadoException();
+        }
+
+        if (!OrderStatus.LISTO.name().equalsIgnoreCase(pedido.getEstado())) {
+            throw new PedidoNoEstaListoException();
+        }
+
+        if (pin == null || pin.trim().isEmpty() || !pin.trim().equals(pedido.getPin())) {
+            throw new PinInvalidoException();
+        }
+
+        pedido.setEstado(OrderStatus.ENTREGADO.name());
+
+        return orderPersistencePort.actualizarPedido(pedido);
     }
 }

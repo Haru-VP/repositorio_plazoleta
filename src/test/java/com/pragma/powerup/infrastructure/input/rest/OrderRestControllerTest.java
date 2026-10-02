@@ -195,4 +195,82 @@ class OrderRestControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(orderHandler, times(1)).notificarPedidoListo(null);
     }
+
+    @Test
+    void entregarPedido_porPathYQueryParam_retornaOk() {
+        // Arrange
+        Long idPedido = 1L;
+        String pin = "123456";
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("ENTREGADO");
+
+        when(orderHandler.entregarPedido(idPedido, pin)).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.entregarPedido(idPedido, pin, null);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("ENTREGADO", response.getBody().getEstado());
+        verify(orderHandler, times(1)).entregarPedido(idPedido, pin);
+    }
+
+    @Test
+    void entregarPedido_porPathYBody_retornaOk() {
+        // Arrange
+        Long idPedido = 1L;
+        com.pragma.powerup.application.dto.request.DeliverOrderRequestDto bodyDto =
+                new com.pragma.powerup.application.dto.request.DeliverOrderRequestDto(null, null, "123456");
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("ENTREGADO");
+
+        when(orderHandler.entregarPedido(idPedido, "123456")).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.entregarPedido(idPedido, null, bodyDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("ENTREGADO", response.getBody().getEstado());
+        verify(orderHandler, times(1)).entregarPedido(idPedido, "123456");
+    }
+
+    @Test
+    void entregarPedidoConBody_retornaOk() {
+        // Arrange
+        Long idPedido = 1L;
+        com.pragma.powerup.application.dto.request.DeliverOrderRequestDto bodyDto =
+                new com.pragma.powerup.application.dto.request.DeliverOrderRequestDto(idPedido, null, "123456");
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setId(idPedido);
+        dto.setEstado("ENTREGADO");
+
+        when(orderHandler.entregarPedido(idPedido, "123456")).thenReturn(dto);
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.entregarPedidoConBody(bodyDto);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("ENTREGADO", response.getBody().getEstado());
+        verify(orderHandler, times(1)).entregarPedido(idPedido, "123456");
+    }
+
+    @Test
+    void entregarPedidoConBody_bodyNulo_llamaHandlerConNull() {
+        // Arrange
+        when(orderHandler.entregarPedido(null, null)).thenReturn(new OrderResponseDto());
+
+        // Act
+        ResponseEntity<OrderResponseDto> response = orderRestController.entregarPedidoConBody(null);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(orderHandler, times(1)).entregarPedido(null, null);
+    }
 }
