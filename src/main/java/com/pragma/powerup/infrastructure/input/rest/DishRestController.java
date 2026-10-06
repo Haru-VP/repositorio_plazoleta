@@ -1,0 +1,111 @@
+package com.pragma.powerup.infrastructure.input.rest;
+
+import com.pragma.powerup.application.dto.request.DishRequestDto;
+import com.pragma.powerup.application.dto.request.DishStatusRequestDto;
+import com.pragma.powerup.application.dto.request.UpdateDishRequestDto;
+import com.pragma.powerup.application.dto.response.DishResponseDto;
+import com.pragma.powerup.application.handler.IDishHandler;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+import java.util.List;
+
+@Tag(name = "Platos", description = "Endpoints para la creación, configuración y gestión de platos")
+@RestController
+@RequestMapping("/api/v1/dish")
+@RequiredArgsConstructor
+public class DishRestController {
+
+    private final IDishHandler dishHandler;
+
+    @Operation(summary = "Crear un nuevo plato asociado a un restaurante")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Plato creado exitosamente", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o precio menor/igual a cero", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: solo el propietario del restaurante puede crear platos", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Restaurante o categoría no encontrados", content = @Content)
+    })
+    @PostMapping
+    public ResponseEntity<Void> guardarPlato(@Valid @RequestBody DishRequestDto dishRequestDto) {
+        dishHandler.guardarPlato(dishRequestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Modificar el precio y la descripción de un plato existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Plato modificado exitosamente", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o precio menor/igual a cero", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: solo el propietario del restaurante puede modificar platos", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Plato no encontrado", content = @Content)
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> actualizarPlato(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateDishRequestDto updateDishRequestDto) {
+        dishHandler.actualizarPlato(id, updateDishRequestDto);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Operation(summary = "Habilitar o deshabilitar un plato en el menú del restaurante")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estado del plato modificado exitosamente", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: solo el propietario del restaurante puede modificar el estado del plato", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Plato no encontrado", content = @Content)
+    })
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Void> cambiarEstadoPlato(
+            @PathVariable Long id,
+            @Valid @RequestBody DishStatusRequestDto dishStatusRequestDto) {
+        dishHandler.cambiarEstadoPlato(id, dishStatusRequestDto);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Operation(summary = "Listar platos activos de un restaurante con filtro opcional por categoría y paginación")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Platos listados exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Parámetros de paginación inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Restaurante o categoría no encontrados", content = @Content)
+    })
+    @GetMapping("/restaurante/{idRestaurante}")
+    public ResponseEntity<List<DishResponseDto>> listarPlatosPorRestaurante(
+            @PathVariable Long idRestaurante,
+            @RequestParam(required = false) Long idCategoria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(dishHandler.listarPlatosPorRestaurante(idRestaurante, idCategoria, page, size));
+    }
+
+    @Operation(summary = "Listar platos activos filtrados por restaurante y categoría con paginación")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Platos listados exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Parámetros de paginación inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Restaurante o categoría no encontrados", content = @Content)
+    })
+    @GetMapping
+    public ResponseEntity<List<DishResponseDto>> listarPlatos(
+            @RequestParam Long idRestaurante,
+            @RequestParam(required = false) Long idCategoria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(dishHandler.listarPlatosPorRestaurante(idRestaurante, idCategoria, page, size));
+    }
+}

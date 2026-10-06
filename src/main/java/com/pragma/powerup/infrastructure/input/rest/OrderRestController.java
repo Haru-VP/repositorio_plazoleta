@@ -1,0 +1,205 @@
+package com.pragma.powerup.infrastructure.input.rest;
+
+import com.pragma.powerup.application.dto.request.AssignOrderRequestDto;
+import com.pragma.powerup.application.dto.request.CancelOrderRequestDto;
+import com.pragma.powerup.application.dto.request.OrderRequestDto;
+import com.pragma.powerup.application.dto.response.OrderResponseDto;
+import com.pragma.powerup.application.handler.IOrderHandler;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
+import java.util.List;
+
+@Tag(name = "Pedidos", description = "Endpoints para la gestión del ciclo de vida de los pedidos")
+@RestController
+@RequestMapping("/api/v1/order")
+@RequiredArgsConstructor
+public class OrderRestController {
+
+    private final IOrderHandler orderHandler;
+
+    @Operation(summary = "Realizar un nuevo pedido a un restaurante")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Pedido realizado exitosamente", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos, platos de diferente restaurante o platos inactivos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Restaurante o plato no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "El cliente ya tiene un pedido en proceso (PENDIENTE, EN_PREPARACION o LISTO)", content = @Content)
+    })
+    @PostMapping
+    public ResponseEntity<Void> realizarPedido(@Valid @RequestBody OrderRequestDto orderRequestDto) {
+        orderHandler.realizarPedido(orderRequestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @Operation(summary = "Listar pedidos filtrando por estado y paginación (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de pedidos obtenida exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Parámetros de paginación inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Restaurante no encontrado", content = @Content)
+    })
+    @GetMapping
+    public ResponseEntity<List<OrderResponseDto>> listarPedidos(
+            @RequestParam(required = false, defaultValue = "PENDIENTE") String estado,
+            @RequestParam(required = false) Long idRestaurante,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(orderHandler.listarPedidosPorEstado(estado, idRestaurante, page, size));
+    }
+
+    @Operation(summary = "Listar pedidos de un restaurante específico filtrando por estado y paginación (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de pedidos obtenida exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Parámetros de paginación inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Restaurante no encontrado", content = @Content)
+    })
+    @GetMapping("/restaurante/{idRestaurante}")
+    public ResponseEntity<List<OrderResponseDto>> listarPedidosPorRestaurante(
+            @PathVariable Long idRestaurante,
+            @RequestParam(required = false, defaultValue = "PENDIENTE") String estado,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(orderHandler.listarPedidosPorEstado(estado, idRestaurante, page, size));
+    }
+
+    @Operation(summary = "Asignarse a un pedido y cambiar su estado a EN_PREPARACION (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido asignado exitosamente y cambiado a EN_PREPARACION"),
+            @ApiResponse(responseCode = "400", description = "El pedido no se encuentra en estado PENDIENTE o datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado PENDIENTE", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/asignar", "/{id}/preparacion", "/asignar/{id}"})
+    @PatchMapping(value = {"/{id}/asignar", "/{id}/preparacion", "/asignar/{id}"})
+    public ResponseEntity<OrderResponseDto> asignarPedido(@PathVariable Long id) {
+        return ResponseEntity.ok(orderHandler.asignarPedido(id));
+    }
+
+    @Operation(summary = "Asignarse a un pedido mediante body y cambiar su estado a EN_PREPARACION (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido asignado exitosamente y cambiado a EN_PREPARACION"),
+            @ApiResponse(responseCode = "400", description = "El pedido no se encuentra en estado PENDIENTE o datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado PENDIENTE", content = @Content)
+    })
+    @PutMapping("/asignar")
+    @PatchMapping("/asignar")
+    public ResponseEntity<OrderResponseDto> asignarPedidoConBody(@RequestBody(required = false) AssignOrderRequestDto assignOrderRequestDto) {
+        Long id = assignOrderRequestDto != null ? assignOrderRequestDto.getIdPedidoEfectivo() : null;
+        return ResponseEntity.ok(orderHandler.asignarPedido(id));
+    }
+
+    @Operation(summary = "Marcar pedido como LISTO y enviar notificación SMS con PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO exitosamente y SMS despachado"),
+            @ApiResponse(responseCode = "400", description = "El pedido no se encuentra en preparación o datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado EN_PREPARACION", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/listo", "/listo/{id}"})
+    @PatchMapping(value = {"/{id}/listo", "/listo/{id}"})
+    public ResponseEntity<OrderResponseDto> notificarPedidoListo(@PathVariable Long id) {
+        return ResponseEntity.ok(orderHandler.notificarPedidoListo(id));
+    }
+
+    @Operation(summary = "Marcar pedido como LISTO mediante body y enviar notificación SMS con PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido marcado como LISTO exitosamente y SMS despachado"),
+            @ApiResponse(responseCode = "400", description = "El pedido no se encuentra en preparación o datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado EN_PREPARACION", content = @Content)
+    })
+    @PutMapping("/listo")
+    @PatchMapping("/listo")
+    public ResponseEntity<OrderResponseDto> notificarPedidoListoConBody(@RequestBody(required = false) com.pragma.powerup.application.dto.request.ReadyOrderRequestDto readyOrderRequestDto) {
+        Long id = readyOrderRequestDto != null ? readyOrderRequestDto.getIdPedidoEfectivo() : null;
+        return ResponseEntity.ok(orderHandler.notificarPedidoListo(id));
+    }
+
+    @Operation(summary = "Entregar pedido verificando PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente y cambiado a estado ENTREGADO"),
+            @ApiResponse(responseCode = "400", description = "El PIN es incorrecto o inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado LISTO", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/entregar", "/entregar/{id}"})
+    @PatchMapping(value = {"/{id}/entregar", "/entregar/{id}"})
+    public ResponseEntity<OrderResponseDto> entregarPedido(
+            @PathVariable Long id,
+            @RequestParam(required = false) String pin,
+            @RequestBody(required = false) com.pragma.powerup.application.dto.request.DeliverOrderRequestDto deliverOrderRequestDto) {
+        String pinEfectivo = pin != null ? pin : (deliverOrderRequestDto != null ? deliverOrderRequestDto.getPin() : null);
+        return ResponseEntity.ok(orderHandler.entregarPedido(id, pinEfectivo));
+    }
+
+    @Operation(summary = "Entregar pedido mediante body verificando PIN de seguridad (Solo Empleados)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido entregado exitosamente y cambiado a estado ENTREGADO"),
+            @ApiResponse(responseCode = "400", description = "El PIN es incorrecto o inválido", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Conflicto: el pedido no se encuentra en estado LISTO", content = @Content)
+    })
+    @PutMapping("/entregar")
+    @PatchMapping("/entregar")
+    public ResponseEntity<OrderResponseDto> entregarPedidoConBody(
+            @RequestBody(required = false) com.pragma.powerup.application.dto.request.DeliverOrderRequestDto deliverOrderRequestDto) {
+        Long id = deliverOrderRequestDto != null ? deliverOrderRequestDto.getIdPedidoEfectivo() : null;
+        String pin = deliverOrderRequestDto != null ? deliverOrderRequestDto.getPin() : null;
+        return ResponseEntity.ok(orderHandler.entregarPedido(id, pin));
+    }
+
+    @Operation(summary = "Cancelar un pedido en estado PENDIENTE (Solo Clientes)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse", content = @Content)
+    })
+    @PutMapping(value = {"/{id}/cancelar", "/cancelar/{id}"})
+    @PatchMapping(value = {"/{id}/cancelar", "/cancelar/{id}"})
+    public ResponseEntity<OrderResponseDto> cancelarPedido(@PathVariable Long id) {
+        return ResponseEntity.ok(orderHandler.cancelarPedido(id));
+    }
+
+    @Operation(summary = "Cancelar un pedido mediante body en estado PENDIENTE (Solo Clientes)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado", content = @Content),
+            @ApiResponse(responseCode = "409", description = "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse", content = @Content)
+    })
+    @PutMapping("/cancelar")
+    @PatchMapping("/cancelar")
+    public ResponseEntity<OrderResponseDto> cancelarPedidoConBody(
+            @RequestBody(required = false) CancelOrderRequestDto cancelOrderRequestDto) {
+        Long id = cancelOrderRequestDto != null ? cancelOrderRequestDto.getIdPedidoEfectivo() : null;
+        return ResponseEntity.ok(orderHandler.cancelarPedido(id));
+    }
+}

@@ -1,0 +1,1636 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Microservicio de Plazoleta - PowerUp Plazoleta",
+    "description": "API REST para la gestiÃ³n de restaurantes, menÃºs, platos y ciclo de vida de los pedidos en la plataforma de Plazoleta de Comidas bajo Arquitectura Hexagonal.",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "name": "Valentina Pinto",
+      "email": "valentina.pinto@pragma.com.co"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://springdoc.org"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8082",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "jwtAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Platos",
+      "description": "Endpoints para la creación, configuración y gestión de platos"
+    },
+    {
+      "name": "Restaurantes",
+      "description": "Endpoints para la creación, configuración y gestión de restaurantes"
+    },
+    {
+      "name": "Pedidos",
+      "description": "Endpoints para la gestión del ciclo de vida de los pedidos"
+    }
+  ],
+  "paths": {
+    "/api/v1/dish/{id}": {
+      "put": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Modificar el precio y la descripciÃ³n de un plato existente",
+        "operationId": "actualizarPlato",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDishRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Plato no encontrado"
+          },
+          "200": {
+            "description": "Plato modificado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
+          },
+          "403": {
+            "description": "Acceso denegado: solo el propietario del restaurante puede modificar platos"
+          }
+        }
+      }
+    },
+    "/api/v1/restaurant": {
+      "post": {
+        "tags": [
+          "Restaurantes"
+        ],
+        "summary": "Crear un nuevo restaurante",
+        "operationId": "guardarRestaurante",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestaurantRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Acceso denegado: se requiere rol ADMINISTRADOR"
+          },
+          "409": {
+            "description": "El NIT del restaurante ya se encuentra registrado"
+          },
+          "201": {
+            "description": "Restaurante creado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada invÃ¡lidos o reglas de negocio no cumplidas"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Restaurantes"
+        ],
+        "summary": "Listar restaurantes ordenados alfabéticamente de forma paginada",
+        "operationId": "listarRestaurantes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de restaurantes obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RestaurantResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          }
+        }
+      }
+    },
+    "/api/v1/dish": {
+      "post": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Crear un nuevo plato asociado a un restaurante",
+        "operationId": "guardarPlato",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DishRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Plato creado exitosamente"
+          },
+          "404": {
+            "description": "Restaurante o categorÃ­a no encontrados"
+          },
+          "403": {
+            "description": "Acceso denegado: solo el propietario del restaurante puede crear platos"
+          },
+          "400": {
+            "description": "Datos de entrada invÃ¡lidos o precio menor/igual a cero"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Listar platos activos filtrados por restaurante y categoría con paginación",
+        "operationId": "listarPlatos",
+        "parameters": [
+          {
+            "name": "idRestaurante",
+            "in": "query",
+            "description": "Identificador del restaurante",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "idCategoria",
+            "in": "query",
+            "description": "Identificador opcional de la categoría para filtrar",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de platos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platos listados exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DishResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          },
+          "404": {
+            "description": "Restaurante o categoría no encontrados"
+          }
+        }
+      }
+    },
+    "/api/v1/dish/restaurante/{idRestaurante}": {
+      "get": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Listar platos activos de un restaurante con filtro opcional por categoría y paginación",
+        "operationId": "listarPlatosPorRestaurante",
+        "parameters": [
+          {
+            "name": "idRestaurante",
+            "in": "path",
+            "description": "Identificador del restaurante",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "idCategoria",
+            "in": "query",
+            "description": "Identificador opcional de la categoría para filtrar",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de platos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platos listados exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DishResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          },
+          "404": {
+            "description": "Restaurante o categoría no encontrados"
+          }
+        }
+      }
+    },
+    "/api/v1/dish/{id}/estado": {
+      "patch": {
+        "tags": [
+          "Platos"
+        ],
+        "summary": "Habilitar o deshabilitar un plato en el menú del restaurante",
+        "operationId": "cambiarEstadoPlato",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DishStatusRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del plato modificado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: solo el propietario del restaurante puede modificar el estado del plato"
+          },
+          "404": {
+            "description": "Plato no encontrado"
+          }
+        },
+        "security": [
+          {
+            "BearerAuthentication": []
+          }
+        ]
+      }
+    },
+    "/api/v1/order": {
+      "post": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Realizar un nuevo pedido a un restaurante",
+        "operationId": "realizarPedido",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido realizado exitosamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos, platos de diferente restaurante o platos inactivos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE"
+          },
+          "404": {
+            "description": "Restaurante o plato no encontrado"
+          },
+          "409": {
+            "description": "El cliente ya tiene un pedido en proceso (PENDIENTE, EN_PREPARACION o LISTO)"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Listar pedidos filtrando por estado y paginación (Solo Empleados)",
+        "operationId": "listarPedidos",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "description": "Estado por el cual filtrar los pedidos (PENDIENTE, EN_PREPARACION, LISTO, ENTREGADO, CANCELADO). Por defecto PENDIENTE",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "PENDIENTE"
+            }
+          },
+          {
+            "name": "idRestaurante",
+            "in": "query",
+            "description": "Identificador opcional del restaurante (si no se proporciona se resuelve del empleado autenticado)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO"
+          },
+          "404": {
+            "description": "Restaurante no encontrado"
+          }
+        }
+      }
+    },
+    "/api/v1/order/restaurante/{idRestaurante}": {
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Listar pedidos de un restaurante específico filtrando por estado y paginación (Solo Empleados)",
+        "operationId": "listarPedidosPorRestaurante",
+        "parameters": [
+          {
+            "name": "idRestaurante",
+            "in": "path",
+            "description": "Identificador del restaurante",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "description": "Estado por el cual filtrar los pedidos",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "PENDIENTE"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Número de página (inicia en 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Cantidad de elementos por página",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros de paginación inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO"
+          },
+          "404": {
+            "description": "Restaurante no encontrado"
+          }
+        }
+      }
+    },
+    "/api/v1/order/{id}/asignar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Asignarse a un pedido y cambiar su estado a EN_PREPARACION (Solo Empleados)",
+        "operationId": "asignarPedidoPut",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador del pedido a asignar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido asignado exitosamente y cambiado a EN_PREPARACION",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en estado PENDIENTE o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o el empleado no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado PENDIENTE"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Asignarse a un pedido y cambiar su estado a EN_PREPARACION mediante PATCH (Solo Empleados)",
+        "operationId": "asignarPedidoPatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador del pedido a asignar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido asignado exitosamente y cambiado a EN_PREPARACION",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en estado PENDIENTE o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o el empleado no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado PENDIENTE"
+          }
+        }
+      }
+    },
+    "/api/v1/order/asignar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Asignarse a un pedido mediante body y cambiar su estado a EN_PREPARACION (Solo Empleados)",
+        "operationId": "asignarPedidoBodyPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido asignado exitosamente y cambiado a EN_PREPARACION",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en estado PENDIENTE o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o el empleado no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado PENDIENTE"
+          }
+        }
+      }
+    },
+    "/api/v1/order/{id}/listo": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Marcar pedido como LISTO y enviar notificación SMS con PIN de seguridad (Solo Empleados)",
+        "operationId": "notificarPedidoListoPut",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del pedido a marcar como listo",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido marcado como LISTO exitosamente y SMS despachado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en preparación o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado EN_PREPARACION"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Marcar pedido como LISTO y enviar notificación SMS con PIN de seguridad (Solo Empleados - Patch)",
+        "operationId": "notificarPedidoListoPatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del pedido a marcar como listo",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido marcado como LISTO exitosamente y SMS despachado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en preparación o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado EN_PREPARACION"
+          }
+        }
+      }
+    },
+    "/api/v1/order/listo": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Marcar pedido como LISTO mediante body y enviar notificación SMS con PIN de seguridad (Solo Empleados)",
+        "operationId": "notificarPedidoListoBodyPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadyOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido marcado como LISTO exitosamente y SMS despachado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El pedido no se encuentra en preparación o datos inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado EN_PREPARACION"
+          }
+        }
+      }
+    },
+    "/api/v1/order/{id}/entregar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Entregar pedido verificando PIN de seguridad (Solo Empleados)",
+        "operationId": "entregarPedidoPut",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del pedido a entregar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "pin",
+            "in": "query",
+            "description": "PIN de seguridad de 6 dígitos suministrado por el cliente",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverOrderRequestDto"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido entregado exitosamente y cambiado a estado ENTREGADO",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El PIN es incorrecto o inválido"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado LISTO"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Entregar pedido verificando PIN de seguridad (Solo Empleados - Patch)",
+        "operationId": "entregarPedidoPatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identificador único del pedido a entregar",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "pin",
+            "in": "query",
+            "description": "PIN de seguridad de 6 dígitos suministrado por el cliente",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverOrderRequestDto"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido entregado exitosamente y cambiado a estado ENTREGADO",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El PIN es incorrecto o inválido"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado LISTO"
+          }
+        }
+      }
+    },
+    "/api/v1/order/entregar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Entregar pedido mediante body verificando PIN de seguridad (Solo Empleados)",
+        "operationId": "entregarPedidoBodyPut",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverOrderRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido entregado exitosamente y cambiado a estado ENTREGADO",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El PIN es incorrecto o inválido"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol EMPLEADO o no pertenece al restaurante"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Conflicto: el pedido no se encuentra en estado LISTO"
+          }
+        }
+      }
+    },
+    "/api/v1/order/{id}/cancelar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido en estado PENDIENTE (Solo Clientes)",
+        "description": "Permite al cliente propietario de la orden cancelar su pedido mientras siga en estado PENDIENTE.",
+        "operationId": "cancelarPedido",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del pedido a cancelar",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido en estado PENDIENTE por PATCH (Solo Clientes)",
+        "description": "Método HTTP PATCH alternativo para cancelar un pedido en estado PENDIENTE.",
+        "operationId": "cancelarPedidoPatch",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del pedido a cancelar",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      }
+    },
+    "/api/v1/order/cancelar": {
+      "put": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido mediante body en estado PENDIENTE (Solo Clientes)",
+        "description": "Permite al cliente cancelar un pedido enviando el id en el cuerpo JSON de la petición.",
+        "operationId": "cancelarPedidoConBody",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Cuerpo con el id del pedido a cancelar",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CancelOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Cancelar un pedido mediante body por PATCH (Solo Clientes)",
+        "description": "Método HTTP PATCH alternativo con body JSON para cancelar un pedido.",
+        "operationId": "cancelarPedidoConBodyPatch",
+        "security": [
+          {
+            "jwtAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Cuerpo con el id del pedido a cancelar",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "": "#/components/schemas/CancelOrderRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "403": {
+            "description": "Acceso denegado: se requiere rol CLIENTE o el pedido no le pertenece"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          },
+          "409": {
+            "description": "Lo sentimos, tu pedido ya está en preparación y no puede cancelarse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssignOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a asignar",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido a asignar",
+            "example": 1
+          }
+        },
+        "description": "DTO de solicitud para asignarse a un pedido como Chef"
+      },
+      "ReadyOrderRequestDto": {
+        "type": "object",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a marcar como listo",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido",
+            "example": 1
+          }
+        },
+        "description": "DTO de solicitud para notificar pedido listo"
+      },
+      "DeliverOrderRequestDto": {
+        "required": [
+          "pin"
+        ],
+        "type": "object",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a entregar",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido",
+            "example": 1
+          },
+          "pin": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "description": "PIN numérico de seguridad de 6 dígitos suministrado por el cliente",
+            "example": "123456"
+          }
+        },
+        "description": "DTO de solicitud para entregar pedido con verificación de PIN"
+      },
+      "UpdateDishRequestDto": {
+        "required": [
+          "descripcion",
+          "precio"
+        ],
+        "type": "object",
+        "properties": {
+          "precio": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "Nuevo precio del plato (nÃºmero entero positivo mayor a 0)",
+            "format": "int32",
+            "example": 38000
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Nueva descripciÃ³n detallada del plato",
+            "example": "Deliciosa bandeja paisa tradicional con ingredientes frescos y porciÃ³n extra de aguacate"
+          }
+        },
+        "description": "Datos permitidos para la actualizaciÃ³n de un plato existente (Ãºnicamente precio y descripciÃ³n)"
+      },
+      "RestaurantRequestDto": {
+        "required": [
+          "direccion",
+          "idPropietario",
+          "nit",
+          "nombre",
+          "telefono",
+          "urlLogo"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del restaurante (no puede estar compuesto Ãºnicamente por nÃºmeros)",
+            "example": "Restaurante El Buen Sabor"
+          },
+          "nit": {
+            "type": "string",
+            "description": "NÃºmero de IdentificaciÃ³n Tributaria (NIT Ãºnicamente numÃ©rico)",
+            "example": "900123456"
+          },
+          "direccion": {
+            "type": "string",
+            "description": "DirecciÃ³n fÃ­sica del restaurante",
+            "example": "Calle 100 # 15-20"
+          },
+          "telefono": {
+            "type": "string",
+            "description": "NÃºmero telefÃ³nico de contacto (mÃ¡ximo 13 caracteres, admite prefijo +)",
+            "example": "+573001234567"
+          },
+          "urlLogo": {
+            "type": "string",
+            "description": "URL accesible que apunta a la imagen del logo del restaurante",
+            "example": "https://misimagenes.com/logo-restaurante.png"
+          },
+          "idPropietario": {
+            "type": "integer",
+            "description": "ID del usuario que actÃºa como propietario (debe existir y tener rol PROPIETARIO)",
+            "format": "int64",
+            "example": 1
+          }
+        },
+        "description": "Datos requeridos para la creaciÃ³n de un nuevo restaurante"
+      },
+      "DishRequestDto": {
+        "required": [
+          "descripcion",
+          "idCategoria",
+          "idRestaurante",
+          "nombre",
+          "precio",
+          "urlImagen"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del plato",
+            "example": "Bandeja Paisa"
+          },
+          "idCategoria": {
+            "type": "integer",
+            "description": "Identificador de la categorÃ­a a la que pertenece el plato",
+            "format": "int64",
+            "example": 2
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "DescripciÃ³n detallada de ingredientes y preparaciÃ³n del plato",
+            "example": "Deliciosa bandeja con frijoles, arroz, carne molida, chicharrÃ³n, huevo y aguacate"
+          },
+          "precio": {
+            "minimum": 1,
+            "type": "integer",
+            "description": "Precio del plato (nÃºmero entero positivo mayor a 0)",
+            "format": "int32",
+            "example": 35000
+          },
+          "idRestaurante": {
+            "type": "integer",
+            "description": "Identificador del restaurante al cual se asocia el plato",
+            "format": "int64",
+            "example": 1
+          },
+          "urlImagen": {
+            "type": "string",
+            "description": "URL accesible que apunta a la fotografÃ­a del plato",
+            "example": "https://misimagenes.com/platos/bandeja-paisa.png"
+          }
+        },
+        "description": "Datos requeridos para la creaciÃ³n de un nuevo plato en el menÃº"
+      },
+      "DishStatusRequestDto": {
+        "type": "object",
+        "properties": {
+          "activo": {
+            "type": "boolean",
+            "description": "Estado de disponibilidad del plato (true para habilitar, false para deshabilitar)",
+            "example": false
+          }
+        },
+        "required": [
+          "activo"
+        ],
+        "description": "Datos para habilitar o deshabilitar un plato en el menú"
+      },
+      "RestaurantResponseDto": {
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del restaurante",
+            "example": "Restaurante El Buen Sabor"
+          },
+          "urlLogo": {
+            "type": "string",
+            "description": "URL accesible del logotipo del restaurante",
+            "example": "https://misimagenes.com/logos/elbuensabor.png"
+          }
+        },
+        "description": "Datos del restaurante para clientes (nombre y logotipo)"
+      },
+      "DishResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador único del plato",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del plato",
+            "example": "Bandeja Paisa"
+          },
+          "precio": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Precio del plato en pesos colombianos",
+            "example": 35000
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción detallada de ingredientes",
+            "example": "Frijoles, arroz, carne molida, chicharrón, huevo y aguacate"
+          },
+          "urlImagen": {
+            "type": "string",
+            "description": "URL accesible de la imagen del plato",
+            "example": "https://misimagenes.com/platos/bandeja-paisa.png"
+          },
+          "categoria": {
+            "type": "string",
+            "description": "Nombre de la categoría del plato",
+            "example": "PLATO FUERTE"
+          }
+        },
+        "description": "Datos de un plato para la visualización del menú por el cliente"
+      },
+      "OrderDishRequestDto": {
+        "required": [
+          "cantidad",
+          "idPlato"
+        ],
+        "type": "object",
+        "properties": {
+          "idPlato": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador único del plato a ordenar",
+            "example": 1
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "description": "Cantidad deseada del plato (entero mayor a 0)",
+            "example": 2
+          }
+        },
+        "description": "Detalle de un plato y cantidad para el pedido"
+      },
+      "OrderRequestDto": {
+        "required": [
+          "idRestaurante",
+          "platos"
+        ],
+        "type": "object",
+        "properties": {
+          "idRestaurante": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del restaurante al que se le realiza el pedido",
+            "example": 1
+          },
+          "platos": {
+            "type": "array",
+            "description": "Lista de platos con sus respectivas cantidades a ordenar",
+            "items": {
+              "$ref": "#/components/schemas/OrderDishRequestDto"
+            }
+          }
+        },
+        "description": "Datos para realizar un pedido a un restaurante"
+      },
+      "OrderDishResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del plato",
+            "example": 10
+          },
+          "idPlato": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del plato (alias)",
+            "example": 10
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre comercial del plato",
+            "example": "Bandeja Paisa"
+          },
+          "precio": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Precio del plato",
+            "example": 35000
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción de ingredientes",
+            "example": "Frijoles, arroz, carne molida, chicharrón, huevo y aguacate"
+          },
+          "urlImagen": {
+            "type": "string",
+            "description": "URL de la imagen del plato",
+            "example": "https://misimagenes.com/platos/bandeja-paisa.png"
+          },
+          "categoria": {
+            "type": "string",
+            "description": "Nombre de la categoría del plato",
+            "example": "PLATO FUERTE"
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Cantidad ordenada del plato",
+            "example": 2
+          }
+        },
+        "description": "Detalle de un plato y cantidad ordenada"
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador único del pedido",
+            "example": 1
+          },
+          "idCliente": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del cliente que realizó el pedido",
+            "example": 5
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha de realización del pedido",
+            "example": "2026-09-29"
+          },
+          "estado": {
+            "type": "string",
+            "description": "Estado actual del pedido",
+            "example": "PENDIENTE"
+          },
+          "idChef": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del chef asignado (null si no ha sido asignado)",
+            "example": null
+          },
+          "pin": {
+            "type": "string",
+            "description": "PIN de seguridad asignado para la entrega del pedido",
+            "example": "123456"
+          },
+          "idRestaurante": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del restaurante al que pertenece el pedido",
+            "example": 1
+          },
+          "platos": {
+            "type": "array",
+            "description": "Lista de platos con sus detalles y cantidades incluidas en el pedido",
+            "items": {
+              "$ref": "#/components/schemas/OrderDishResponseDto"
+            }
+          }
+        },
+        "description": "Datos de un pedido para visualización por el personal del restaurante"
+      },
+      "CancelOrderRequestDto": {
+        "type": "object",
+        "description": "DTO de solicitud para cancelar un pedido",
+        "properties": {
+          "idPedido": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador del pedido a cancelar",
+            "example": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador alternativo del pedido",
+            "example": 1
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "jwtAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
